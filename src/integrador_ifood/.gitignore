@@ -1,0 +1,50 @@
+# ---- Segredos: nunca versionar ----
+.env
+*.env
+!env.example
+
+# ---- Estado de autenticacao e tokens ----
+*tokens*.json
+bi_tokens.json
+bi_autorizacao_pendente.json
+
+# ---- Bancos de dados locais ----
+*.db
+*.sqlite
+*.sqlite3
+
+# ---- Logs ----
+*.log
+
+# ---- Arquivos de execucao com dados reais ----
+eventos_vistos.json
+homologacao_payload.json
+*.jsonl
+
+# ---- Planilhas e extracoes ----
+*.csv
+*.xlsx
+*.xls
+
+# ---- Saidas geradas com dados reais ----
+portal_*.html
+relatorio_*.html
+
+
+# ---- Python ----
+__pycache__/
+*.pyc
+*.pyo
+.venv/
+venv/
+
+
+# ---- Fechando buracos (auditoria 23/10/2026) ----
+# "*.csv" NAO cobre ".csv.gz": o arquivo de conciliacao e dado financeiro real
+*.csv.gz
+*.gz
+conciliacao/
+# gravacao atomica deixa .tmp (bi_tokens.json.tmp, arquivo.csv.gz.tmp)
+*.tmp
+# "*.env" nao cobre ".env.bak" / ".env.local" / ".env.producao"
+.env.*

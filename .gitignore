@@ -1,0 +1,28 @@
+# Segredos e configuração local
+.env
+*.env
+!env.example
+# Bancos e dados
+*.db
+*.sqlite
+*.csv
+*.xlsx
+*.jsonl
+conciliacao/
+# Logs e arquivos de execução
+*.log
+homologacao_payload.json
+eventos_vistos.json
+bi_tokens.json
+bi_autorizacao_pendente.json
+*tokens*.json
+# Saídas com dados reais
+portal_gerencial.html
+portal_*.html
+# Python
+__pycache__/
+*.pyc
+.venv/
+
+# Backups locais (nunca publicar)
+*.bkp-*

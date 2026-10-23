@@ -1,0 +1,929 @@
+<title>Portal Gerencial · Rede Demo</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Montserrat:wght@600;700;800&family=DM+Sans:opsz,wght@9..40,400;9..40,500;9..40,700&display=swap">
+<style>
+/* Portal Gerencial — mesmos tokens do portal da loja (tema claro único, fundo gelo).
+   Layout: barra fixa com marca, abas e filtros; uma tela por aba em coluna de até 1240px. */
+:root {
+  --bg: #FAF6F7; --card: #FFFFFF; --tint: #FBE9EE; --borda: #F3DDE3;
+  --ink: #2E0E17; --titulo: #5C1A2B; --acento: #A3284D; --suave: #6E4A54; --nota: #7A5562; --grade: #F3DDE3;
+  --c-balcao: #5C1A2B; --c-ifood: #EA1D2C; --c-99: #FFC107;
+  --s1: #A3284D; --s2: #2A78D6; --s3: #EB6834; --s4: #1BAF7A;
+  --pos: #1E7A44; --pos-bg: #E8F5EE; --neg: #B3131F; --neg-bg: #FDECEE; --at: #8A6100; --at-bg: #FFF7DE;
+  --info: #2A5F9E; --info-bg: #EAF2FB;
+  --sombra: 0 12px 32px rgba(92, 26, 43, 0.08); --sombra-hover: 0 24px 50px rgba(92, 26, 43, 0.18);
+  --vidro: rgba(250, 246, 247, 0.88);
+  --f-titulo: Montserrat, system-ui, sans-serif; --f-texto: "DM Sans", system-ui, sans-serif;
+  color-scheme: light;
+}
+* { box-sizing: border-box; }
+[hidden] { display: none !important; }
+body { margin: 0; background: var(--bg); color: var(--ink); font-family: var(--f-texto); font-size: 15px; line-height: 1.45; }
+.wrap { max-width: 1240px; margin: 0 auto; padding-left: max(16px, env(safe-area-inset-left, 0px)); padding-right: max(16px, env(safe-area-inset-right, 0px)); }
+.num, td.n, th.n { font-variant-numeric: tabular-nums; }
+
+/* Barra superior */
+.topo { position: sticky; top: env(safe-area-inset-top, 0px); z-index: 10; background: var(--vidro);
+  backdrop-filter: blur(20px) saturate(180%); -webkit-backdrop-filter: blur(20px) saturate(180%); border-bottom: 1px solid var(--borda); }
+@media (prefers-reduced-transparency: reduce) { .topo { background: var(--bg); backdrop-filter: none; } }
+.marca { display: flex; align-items: center; gap: 14px; padding-block: 10px; }
+.logo { height: 44px; width: auto; flex: none; border-radius: 10px; background: #FFFFFF; padding: 3px; }
+.marca-txt { display: flex; flex-direction: column; min-width: 0; }
+.marca-txt b { font-family: var(--f-titulo); font-weight: 800; font-size: 18px; color: var(--titulo); line-height: 1.15; }
+.marca-txt span { font-size: 13px; color: var(--suave); }
+.pilula { margin-left: auto; font-family: var(--f-titulo); font-weight: 700; font-size: 12px; color: var(--neg);
+  border: 1px solid #F5C7CC; border-radius: 999px; padding: 7px 12px; white-space: nowrap; background: var(--neg-bg); }
+@media (max-width: 600px) { .pilula .longo { display: none; } }
+.abas { display: flex; gap: 22px; overflow-x: auto; scrollbar-width: none; }
+.abas::-webkit-scrollbar { display: none; }
+.abas button { position: relative; min-height: 44px; padding: 0 2px; border: 0; background: none; white-space: nowrap; cursor: pointer;
+  font-family: var(--f-titulo); font-weight: 600; font-size: 15px; color: var(--suave); }
+.abas button[aria-selected="true"] { color: var(--titulo); font-weight: 800; }
+.abas button[aria-selected="true"]::after { content: ""; position: absolute; left: 0; right: 0; bottom: 0; height: 3px; border-radius: 3px 3px 0 0; background: var(--titulo); }
+.selo { margin-left: 6px; font-family: var(--f-texto); font-size: 11px; font-weight: 700; padding: 2px 7px; border-radius: 999px; background: var(--at-bg); color: var(--at); }
+.filtros { display: flex; flex-wrap: wrap; align-items: center; gap: 10px 18px; padding-block: 10px; border-top: 1px solid var(--borda); }
+.filtros label { display: inline-flex; align-items: center; gap: 8px; font-size: 13px; font-weight: 700; color: var(--suave); }
+select { font: inherit; font-size: 14px; color: var(--ink); background: var(--card); border: 1px solid var(--borda); border-radius: 10px; min-height: 36px; padding: 0 10px; cursor: pointer; max-width: 100%; }
+.chk { cursor: pointer; }
+.chk input { width: 18px; height: 18px; accent-color: var(--acento); }
+button:focus-visible, a:focus-visible, select:focus-visible, input:focus-visible, summary:focus-visible { outline: 3px solid var(--acento); outline-offset: 2px; border-radius: 6px; }
+
+.seg { display: inline-flex; padding: 4px; gap: 4px; border-radius: 999px; background: var(--tint); flex-wrap: wrap; }
+.seg button { min-height: 32px; padding: 0 12px; border: 0; border-radius: 999px; background: transparent; cursor: pointer;
+  font-family: var(--f-titulo); font-weight: 700; font-size: 13px; color: var(--suave); display: inline-flex; align-items: center; gap: 6px;
+  transition: background .2s ease, color .2s ease, transform .1s ease-out; }
+.seg button:active { transform: scale(.97); }
+.seg button[aria-pressed="true"] { background: var(--card); color: var(--titulo); box-shadow: 0 2px 8px rgba(92, 26, 43, .12); }
+
+/* Telas */
+main .wrap { padding-block: 28px 48px; }
+.tela { display: flex; flex-direction: column; gap: 22px; }
+.eyebrow { display: flex; align-items: center; gap: 10px; font-size: 13px; font-weight: 700; letter-spacing: .14em; text-transform: uppercase; color: var(--acento); }
+.eyebrow::before { content: ""; width: 28px; height: 3px; border-radius: 2px; background: var(--acento); }
+h1, h2, h3 { margin: 0; text-wrap: balance; }
+.manchete { font-family: var(--f-titulo); font-weight: 800; font-size: clamp(24px, 3.2vw, 32px); line-height: 1.15; letter-spacing: -.01em; color: var(--titulo); max-width: 34ch; }
+.sub { margin: 0; color: var(--suave); max-width: 75ch; }
+h2 { font-family: var(--f-titulo); font-weight: 800; font-size: 19px; color: var(--titulo); }
+.cab { display: flex; flex-direction: column; gap: 10px; }
+.secao-cab { display: flex; justify-content: space-between; align-items: baseline; gap: 12px; flex-wrap: wrap; margin-bottom: 14px; }
+.secao-cab small { color: var(--nota); font-size: 13px; }
+.card { background: var(--card); border: 1px solid var(--borda); border-radius: 22px; box-shadow: var(--sombra); }
+.pad { padding: 22px 24px; }
+@media (max-width: 560px) { .pad { padding: 16px; } }
+.grade-2 { display: grid; grid-template-columns: repeat(auto-fit, minmax(340px, 1fr)); gap: 22px; }
+.grade-4 { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 16px; }
+@media (max-width: 420px) { .grade-2 { grid-template-columns: 1fr; } }
+.grade-2 > *, .grade-4 > * { min-width: 0; }
+
+/* KPI */
+.kpi { display: flex; flex-direction: column; gap: 6px; padding: 18px 20px; }
+.kpi-rot { font-size: 13px; font-weight: 500; color: var(--suave); }
+.kpi-val { font-family: var(--f-titulo); font-weight: 800; font-size: clamp(26px, 3vw, 34px); line-height: 1.05; font-variant-numeric: tabular-nums; color: var(--titulo); }
+.kpi-nota { font-size: 12px; color: var(--nota); }
+.var { display: inline-flex; align-items: baseline; gap: 6px; font-family: var(--f-titulo); font-weight: 800; font-variant-numeric: tabular-nums; }
+.var.pos { color: var(--pos); } .var.neg { color: var(--neg); } .var.zero { color: var(--suave); }
+.kpi .var { font-size: clamp(24px, 2.6vw, 30px); }
+
+/* Mix */
+.mix-barra { display: flex; height: 14px; border-radius: 8px; overflow: hidden; gap: 2px; }
+.mix-barra i { display: block; height: 100%; }
+.mini { display: flex; height: 8px; width: 110px; border-radius: 4px; overflow: hidden; gap: 2px; background: var(--tint); }
+.mini i { display: block; height: 100%; }
+.dot { width: 11px; height: 11px; border-radius: 50%; display: inline-block; flex: none; }
+.legenda { display: flex; flex-wrap: wrap; gap: 14px; font-size: 13px; color: var(--suave); }
+.legenda span { display: inline-flex; align-items: center; gap: 6px; }
+
+/* Gráficos */
+.grafico svg { display: block; width: 100%; height: auto; overflow: visible; }
+.eixo { fill: var(--nota); font-size: 11px; font-family: var(--f-texto); }
+.rotulo { fill: var(--ink); font-size: 11px; font-family: var(--f-titulo); font-weight: 700; }
+.dica { position: fixed; pointer-events: none; z-index: 20; background: var(--card); color: var(--ink); border: 1px solid var(--borda);
+  border-radius: 12px; box-shadow: var(--sombra-hover); padding: 10px 12px; font-size: 13px; min-width: 190px; }
+.dica b { font-family: var(--f-titulo); color: var(--titulo); }
+.dica .l { display: flex; justify-content: space-between; align-items: center; gap: 14px; font-variant-numeric: tabular-nums; }
+.dica .l span:first-child { display: inline-flex; align-items: center; gap: 6px; }
+
+/* Tabelas */
+.rolar { overflow-x: auto; -webkit-overflow-scrolling: touch; }
+table { border-collapse: collapse; width: 100%; font-size: 14px; }
+th, td { text-align: right; padding: 9px 10px; border-bottom: 1px solid var(--borda); white-space: nowrap; font-variant-numeric: tabular-nums; }
+th:first-child, td:first-child, th.e, td.e { text-align: left; }
+th { font-size: 12px; color: var(--suave); font-weight: 700; vertical-align: bottom; }
+th button { font: inherit; color: inherit; background: none; border: 0; padding: 0; cursor: pointer; display: inline-flex; align-items: center; gap: 4px; }
+th[aria-sort] button { color: var(--titulo); }
+th[aria-sort="descending"] button::after { content: "▼"; font-size: 9px; }
+th[aria-sort="ascending"] button::after { content: "▲"; font-size: 9px; }
+tbody tr:hover { background: #FDF7F9; }
+td.loja { font-weight: 700; color: var(--ink); }
+td .chips { display: inline-flex; gap: 4px; margin-left: 8px; vertical-align: middle; }
+.chip { font-size: 11px; font-weight: 700; padding: 2px 8px; border-radius: 999px; background: var(--tint); color: var(--suave); white-space: nowrap; }
+.chip.dado { background: var(--at-bg); color: var(--at); }
+.chip.nova { background: var(--info-bg); color: var(--info); }
+.chip.enc { background: #EEE8EA; color: var(--suave); }
+.t-pos { color: var(--pos); font-weight: 700; } .t-neg { color: var(--neg); font-weight: 700; } .t-nd { color: var(--nota); }
+.nota-bar { display: inline-flex; align-items: center; gap: 8px; justify-content: flex-end; }
+.nota-bar i { display: block; height: 6px; border-radius: 3px; background: var(--acento); }
+.nota-bar b { font-family: var(--f-titulo); min-width: 26px; text-align: right; }
+details.tabela { font-size: 13px; color: var(--suave); margin-top: 14px; }
+details.tabela summary { cursor: pointer; font-weight: 700; color: var(--acento); }
+details.tabela table { margin-top: 10px; color: var(--ink); }
+.cmp input { width: 18px; height: 18px; accent-color: var(--acento); cursor: pointer; }
+
+/* Pesos */
+.pesos { display: grid; grid-template-columns: repeat(auto-fit, minmax(210px, 1fr)); gap: 14px 22px; }
+.peso { display: flex; flex-direction: column; gap: 6px; }
+.peso label { display: flex; justify-content: space-between; font-size: 14px; font-weight: 700; }
+.peso label output { font-family: var(--f-titulo); color: var(--acento); }
+.peso input[type=range] { width: 100%; accent-color: var(--acento); min-height: 28px; }
+.peso small { font-size: 12px; color: var(--nota); }
+
+/* Variação (quem explica) */
+.mov { display: flex; flex-direction: column; gap: 10px; }
+.mov-l { display: grid; grid-template-columns: minmax(0, 1fr) auto; gap: 2px 12px; align-items: center; font-size: 14px; }
+.mov-l .b { grid-column: 1 / -1; height: 8px; border-radius: 4px; background: var(--tint); overflow: hidden; }
+.mov-l .b i { display: block; height: 100%; border-radius: 4px; }
+.mov-l strong { font-variant-numeric: tabular-nums; }
+
+/* Comparação */
+.pick { display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 12px; }
+.pick label { display: flex; align-items: center; gap: 8px; }
+.pick select { flex: 1; min-width: 0; }
+
+/* Alertas */
+.alertas { display: flex; flex-direction: column; gap: 12px; }
+.al { padding: 16px 20px; display: grid; grid-template-columns: auto minmax(0, 1fr); gap: 4px 14px; }
+.al-ic { grid-row: span 3; width: 36px; height: 36px; border-radius: 10px; display: flex; align-items: center; justify-content: center; }
+.al h3 { font-family: var(--f-titulo); font-weight: 800; font-size: 16px; color: var(--titulo); }
+.al p { margin: 0; font-size: 14px; }
+.al .acao { font-size: 13px; color: var(--suave); }
+.al.dado .al-ic { background: var(--at-bg); color: var(--at); }
+.al.queda .al-ic { background: var(--neg-bg); color: var(--neg); }
+.al.alta .al-ic { background: var(--pos-bg); color: var(--pos); }
+.al.confirmar .al-ic { background: var(--info-bg); color: var(--info); }
+.al.info .al-ic { background: var(--tint); color: var(--titulo); }
+.etq { font-size: 11px; font-weight: 700; padding: 2px 8px; border-radius: 999px; margin-left: 8px; vertical-align: middle; font-family: var(--f-texto); }
+.al.dado .etq { background: var(--at-bg); color: var(--at); } .al.queda .etq { background: var(--neg-bg); color: var(--neg); }
+.al.alta .etq { background: var(--pos-bg); color: var(--pos); } .al.confirmar .etq { background: var(--info-bg); color: var(--info); }
+.al.info .etq { background: var(--tint); color: var(--suave); }
+.vazio { padding: 18px 20px; color: var(--suave); font-size: 14px; }
+.pendente { padding: 22px 24px; display: flex; gap: 14px; align-items: flex-start; border: 1px dashed var(--nota); border-radius: 22px; background: var(--card); }
+.pendente .al-ic { background: var(--tint); color: var(--titulo); flex: none; width: 40px; height: 40px; border-radius: 12px; display: flex; align-items: center; justify-content: center; }
+.pendente h3 { font-family: var(--f-titulo); font-weight: 800; font-size: 16px; color: var(--titulo); margin-bottom: 4px; }
+.pendente p { margin: 0 0 8px; color: var(--suave); font-size: 14px; max-width: 80ch; }
+.pendente code { font-size: 13px; background: var(--tint); padding: 1px 6px; border-radius: 6px; color: var(--ink); }
+
+.link { color: var(--acento); font-weight: 700; background: none; border: 0; padding: 0; cursor: pointer; font: inherit; text-decoration: underline; text-underline-offset: 3px; }
+footer { border-top: 1px solid var(--borda); }
+footer .wrap { padding-block: 28px 40px; display: flex; gap: 24px; justify-content: space-between; align-items: flex-start; flex-wrap: wrap; }
+footer .met { max-width: 85ch; font-size: 12px; color: var(--nota); display: flex; flex-direction: column; gap: 6px; }
+footer .met b { color: var(--suave); font-size: 13px; }
+footer .logo { height: 34px; }
+
+.entra { animation: entra .6s cubic-bezier(.2, .7, .2, 1) both; }
+@keyframes entra { from { opacity: .001; translate: 0 12px; } to { opacity: 1; translate: 0 0; } }
+@media (prefers-reduced-motion: reduce) { .entra { animation: none; } }
+</style>
+
+<header class="topo">
+  <div class="wrap marca">
+    <img class="logo" src="__LOGO__" alt="Rede Demo">
+    <div class="marca-txt"><b>Portal Gerencial</b><span>Rede Demo</span></div>
+    <span class="pilula">Uso interno<span class="longo"> · não enviar a franqueados</span></span>
+  </div>
+  <div class="wrap"><nav class="abas" role="tablist" aria-label="Telas do portal" id="abas"></nav></div>
+  <div class="wrap filtros" role="group" aria-label="Filtros">
+    <label>Mês <select id="f-mes"></select></label>
+    <div class="seg" role="group" aria-label="Canal" id="f-canal"></div>
+    <label class="chk"><input type="checkbox" id="f-enc"> Mostrar lojas encerradas</label>
+  </div>
+</header>
+
+<main><div class="wrap" id="conteudo"></div></main>
+
+<footer>
+  <div class="wrap">
+    <div class="met" id="metodo"></div>
+    <img class="logo" src="__LOGO__" alt="Rede Demo">
+  </div>
+</footer>
+
+<div class="dica" id="dica" hidden></div>
+
+<script id="dados" type="application/json">__DADOS_JSON__</script>
+<script>
+(function () {
+  "use strict";
+  var D = JSON.parse(document.getElementById("dados").textContent);
+  var M = D.meses, NM = M.length;
+  var CANAIS = ["DEGUST", "IFOOD", "99FOOD"];
+  var NOME = { DEGUST: "Balcão", IFOOD: "iFood", "99FOOD": "99Food", TODOS: "Todos os canais" };
+  var COR = { DEGUST: "var(--c-balcao)", IFOOD: "var(--c-ifood)", "99FOOD": "var(--c-99)" };
+  var SERIE = ["var(--s1)", "var(--s2)", "var(--s3)", "var(--s4)"];
+  var MESES_PT = ["janeiro", "fevereiro", "março", "abril", "maio", "junho", "julho", "agosto", "setembro", "outubro", "novembro", "dezembro"];
+  var LOJA = {}; D.lojas.forEach(function (l) { LOJA[l.id] = l; });
+
+  /* ---------- Formatação ---------- */
+  var fmtR = new Intl.NumberFormat("pt-BR", { style: "currency", currency: "BRL" });
+  var fmtR0 = new Intl.NumberFormat("pt-BR", { style: "currency", currency: "BRL", maximumFractionDigits: 0 });
+  var fmtN = new Intl.NumberFormat("pt-BR");
+  function brl(v) { return fmtR.format(v); }
+  function brl0(v) { return fmtR0.format(v); }
+  function curto(v) {
+    var a = Math.abs(v), s = v < 0 ? "−" : "";
+    if (a >= 1e6) return s + "R$ " + (a / 1e6).toLocaleString("pt-BR", { maximumFractionDigits: 2 }) + " mi";
+    if (a >= 1e3) return s + "R$ " + (a / 1e3).toLocaleString("pt-BR", { maximumFractionDigits: 1 }) + " mil";
+    return s + "R$ " + Math.round(a).toLocaleString("pt-BR");
+  }
+  function pct(v, casas) { return v.toLocaleString("pt-BR", { minimumFractionDigits: casas === undefined ? 1 : casas, maximumFractionDigits: casas === undefined ? 1 : casas }) + "%"; }
+  function esc(s) { return String(s).replace(/[&<>"]/g, function (c) { return { "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" }[c]; }); }
+  function rot(ym) { return MESES_PT[+ym.slice(5) - 1].slice(0, 3) + "/" + ym.slice(2, 4); }
+  function rotLongo(ym) { return MESES_PT[+ym.slice(5) - 1] + "/" + ym.slice(0, 4); }
+  function mesNome(ym) { return MESES_PT[+ym.slice(5) - 1]; }
+  function varTxt(v) {
+    if (v === null || v === undefined || !isFinite(v)) return '<span class="t-nd">—</span>';
+    if (Math.abs(v) < 0.05) return '<span class="t-nd">0,0%</span>';
+    return '<span class="' + (v > 0 ? "t-pos" : "t-neg") + '">' + (v > 0 ? "+" : "−") + pct(Math.abs(v)) + "</span>";
+  }
+  function sinal(v) { return Math.abs(v) < 0.05 ? "estável (" + pct(v, 2).replace("-", "−") + ")" : (v > 0 ? "+" : "−") + pct(Math.abs(v)); }
+  function varGrande(v, ref) {
+    if (v === null || !isFinite(v)) return '<span class="var zero">Sem base</span><span class="kpi-nota">' + esc(ref) + "</span>";
+    if (Math.abs(v) < 0.5) return '<span class="var zero">Estável</span><span class="kpi-nota">' + esc(ref) + "</span>";
+    return '<span class="var ' + (v > 0 ? "pos" : "neg") + '">' + (v > 0 ? "▲ +" : "▼ −") + pct(Math.abs(v)) + '</span><span class="kpi-nota">' + esc(ref) + "</span>";
+  }
+
+  /* ---------- Estado dos filtros ---------- */
+  var S = { i: NM - 1, canal: "TODOS", enc: false, pesos: { fat: 1, mom: 1, yoy: 1, yoy3: 1 },
+            ordR: { col: "nota", dir: -1 }, ord9: { col: "pedidos", dir: -1 }, ordP: { col: "fat", dir: -1 }, ordPL: { col: "total", dir: -1 }, cmp: null, aba: "rede" };
+
+  /* ---------- Cálculos ---------- */
+  var CI = { DEGUST: 0, IFOOD: 1, "99FOOD": 2 };
+  function val(id, k, i) { var a = D.v[id]; return a && i >= 0 && i < NM ? a[k][i] : 0; }
+  function chs() { return S.canal === "TODOS" ? [0, 1, 2] : [CI[S.canal]]; }
+  // YoY só com balcão + iFood: o 99Food começou em jan/2026 e não tem base no ano anterior
+  function chsYoY() { return S.canal === "TODOS" ? [0, 1] : (S.canal === "99FOOD" ? [] : [CI[S.canal]]); }
+  function fat(id, i) { return chs().reduce(function (s, k) { return s + val(id, k, i); }, 0); }
+  function variacao(a, b) { return b > 0 ? (a / b - 1) * 100 : null; }
+  function mom(id, i) { return i < 1 ? null : variacao(fat(id, i), fat(id, i - 1)); }
+  // "Mesma base": um canal da loja só entra se vendeu em todos os meses dos dois períodos
+  function yoyPar(id, i, n) {
+    if (i - 12 - (n - 1) < 0) return null;
+    var cur = 0, base = 0, ok = false;
+    chsYoY().forEach(function (k) {
+      var a = 0, b = 0, falta = false;
+      for (var j = 0; j < n; j++) { var x = val(id, k, i - j), y = val(id, k, i - 12 - j); if (!(x > 0 && y > 0)) falta = true; a += x; b += y; }
+      if (!falta) { cur += a; base += b; ok = true; }
+    });
+    return ok ? { cur: cur, base: base } : null;
+  }
+  function yoy(id, i, n) { var p = yoyPar(id, i, n || 1); return p ? variacao(p.cur, p.base) : null; }
+  function redeFat(i, k) { return D.lojas.reduce(function (s, l) { return s + (k === undefined ? fat(l.id, i) : val(l.id, k, i)); }, 0); }
+  function redeYoYMesmas(i) {
+    var c = 0, b = 0, ok = false;
+    D.lojas.forEach(function (l) { var p = yoyPar(l.id, i, 1); if (p) { c += p.cur; b += p.base; ok = true; } });
+    return ok ? variacao(c, b) : null;
+  }
+  function redeYoYTotal(i) {
+    if (i < 12 || !chsYoY().length) return null;
+    var c = 0, b = 0;
+    D.lojas.forEach(function (l) { chsYoY().forEach(function (k) { c += val(l.id, k, i); b += val(l.id, k, i - 12); }); });
+    return variacao(c, b);
+  }
+  function visivel(l) { return l.status === "ativa" || (S.enc && l.status === "encerrada"); }
+  function nova(l, i) { return l.inicio && i >= 12 && l.inicio > M[i - 12]; }
+  function mediana(a) { var s = a.slice().sort(function (x, y) { return x - y; }), m = s.length >> 1; return s.length % 2 ? s[m] : (s[m - 1] + s[m]) / 2; }
+  // Suspeita de carga incompleta: zerou depois de vender em 2 dos 3 meses anteriores,
+  // ou veio abaixo de 35% da mediana dos 12 meses anteriores
+  function suspeito(id, k, i) {
+    var a = val(id, k, i), prev = 0;
+    for (var j = 1; j <= 3; j++) if (val(id, k, i - j) > 0) prev++;
+    if (a === 0) return prev >= 2 ? { tipo: "zero" } : null;
+    var hist = [];
+    for (j = 1; j <= 12; j++) { var x = val(id, k, i - j); if (x > 0) hist.push(x); }
+    if (hist.length < 6) return null;
+    var med = mediana(hist);
+    return a < 0.35 * med ? { tipo: "baixo", med: med, p: a / med * 100 } : null;
+  }
+  function suspeitasLoja(id, i) {
+    var r = [];
+    if (!LOJA[id] || LOJA[id].status !== "ativa") return r;
+    [0, 1, 2].forEach(function (k) { var s = suspeito(id, k, i); if (s) { s.k = k; r.push(s); } });
+    return r;
+  }
+  function ultimaVenda(id, k, i) {
+    for (var j = 1; j <= 3; j++) { var x = val(id, k, i - j); if (x > 0) return "último: " + brl0(x) + " em " + rot(M[i - j]); }
+    return "";
+  }
+  var PI0 = D.pmeses && D.pmeses.length ? M.indexOf(D.pmeses[0]) : NM;
+  function sem(t) { return String(t).toLowerCase().normalize("NFD").replace(/[̀-ͯ]/g, ""); }
+  // Rupturas do mês: só existem para o mês fechado (o G5 traz os 4 últimos meses).
+  // Lojas com dado a conferir no canal ficam de fora: a "ruptura" pode ser carga incompleta.
+  function rupturasDoMes(i) {
+    var R = { ok: false, grupos: [], validas: 0, validasLista: [], ignoradas: 0, nLojas: 0, motivo: "" };
+    if (!D.rupturas) { R.motivo = "Faltam os dados de produto por loja (bloco G5)."; return R; }
+    if (M[i] !== D.rupturas.mes) { R.motivo = "A regra de ruptura usa os 4 meses até " + rotLongo(D.rupturas.mes) + ". Escolha esse mês no filtro para ver as rupturas."; return R; }
+    if (S.canal === "IFOOD") { R.motivo = "A ruptura do iFood está desligada até corrigir o de-para de tamanhos."; return R; }
+    R.ok = true;
+    var g = {}, lojas = {};
+    D.rupturas.lista.forEach(function (x) {
+      if (S.canal !== "TODOS" && x.canal !== S.canal) return;
+      if (!LOJA[x.loja] || !visivel(LOJA[x.loja])) return;
+      if (suspeito(x.loja, CI[x.canal], i)) { R.ignoradas++; return; }
+      R.validasLista.push(x);
+      if (x.sazonal) return;
+      R.validas++; lojas[x.loja] = 1;
+      var k = x.canal + "|" + x.chave;
+      var o = g[k] || (g[k] = { nome: x.nome, canal: x.canal, sazonal: x.sazonal, lojas: [], todos: 0 });
+      o.lojas.push(x); if (!x.outros.length) o.todos++;
+    });
+    R.nLojas = Object.keys(lojas).length;
+    R.grupos = Object.keys(g).map(function (k) { return g[k]; }).sort(function (a, b) { return b.lojas.length - a.lojas.length || a.nome.localeCompare(b.nome, "pt-BR"); });
+    return R;
+  }
+  function mixLoja(id, i) { return [0, 1, 2].map(function (k) { return val(id, k, i); }); }
+  function ped99(id, i) { var d = D.f99[id]; return d ? d[M[i]] : null; }
+
+  /* ---------- Dica flutuante ---------- */
+  var dica = document.getElementById("dica");
+  function mostraDica(html, x, y) {
+    dica.innerHTML = html; dica.hidden = false;
+    var w = dica.offsetWidth, h = dica.offsetHeight;
+    dica.style.left = Math.min(window.innerWidth - w - 12, Math.max(12, x + 14)) + "px";
+    dica.style.top = (y - h - 14 < 12 ? y + 18 : y - h - 14) + "px";
+  }
+  function escondeDica() { dica.hidden = true; }
+  function escala(max) {
+    max = max || 1;
+    var passo = Math.pow(10, Math.floor(Math.log10(max)));
+    var topo = Math.ceil(max / passo) * passo;
+    if (topo / passo > 6) { passo *= 2; topo = Math.ceil(max / passo) * passo; }
+    if (topo / passo < 3) { passo /= 2; }
+    return { topo: topo, passo: passo };
+  }
+
+  /* ---------- Colunas (empilhadas) ---------- */
+  function colunas(opt) {
+    var W = opt.largura || 760, H = opt.altura || 270, ml = 62, mr = 8, mt = 22, mb = 30;
+    var pw = W - ml - mr, ph = H - mt - mb, n = opt.itens.length;
+    var tot = opt.itens.map(function (it) { return opt.series.reduce(function (s, k) { return s + (it[k] || 0); }, 0); });
+    var e = escala(Math.max.apply(null, tot)), topo = e.topo;
+    var y = function (v) { return mt + ph - (v / topo) * ph; };
+    var slot = pw / n, bw = Math.min(40, slot * 0.62);
+    var s = '<svg viewBox="0 0 ' + W + " " + H + '" role="img" aria-label="' + esc(opt.titulo) + '">';
+    for (var g = 0; g <= topo + 1e-9; g += e.passo) {
+      s += '<line x1="' + ml + '" x2="' + (W - mr) + '" y1="' + y(g) + '" y2="' + y(g) + '" stroke="var(--grade)"/>';
+      s += '<text class="eixo" x="' + (ml - 8) + '" y="' + (y(g) + 4) + '" text-anchor="end">' + (opt.eixo ? opt.eixo(g) : curto(g)) + "</text>";
+    }
+    opt.itens.forEach(function (it, i) {
+      var x = ml + slot * i + (slot - bw) / 2, base = mt + ph, dest = opt.destaque === i;
+      var vis = opt.series.filter(function (k) { return it[k] > 0; });
+      vis.forEach(function (k, j) {
+        var h = (it[k] / topo) * ph; base -= h;
+        var r = j === vis.length - 1 ? Math.min(4, h) : 0;
+        var cor = opt.cores ? opt.cores[k] : COR[k];
+        s += '<path d="M' + x + "," + (base + h) + " V" + (base + r) + " Q" + x + "," + base + " " + (x + r) + "," + base +
+             " H" + (x + bw - r) + " Q" + (x + bw) + "," + base + " " + (x + bw) + "," + (base + r) + " V" + (base + h) +
+             ' Z" fill="' + cor + '"' + (k === "99FOOD" ? ' stroke="var(--titulo)" stroke-width="1"' : "") +
+             ' opacity="' + (opt.destaque === undefined || dest ? 1 : 0.55) + '"/>';
+        if (vis.length > 1) base -= 2;
+      });
+      if (opt.rotular === "todos" || (opt.rotular === "destaque" && dest))
+        s += '<text class="rotulo" x="' + (x + bw / 2) + '" y="' + (base - 6) + '" text-anchor="middle">' + (opt.rotulo ? opt.rotulo(tot[i]) : curto(tot[i])) + "</text>";
+      s += '<text class="eixo" x="' + (x + bw / 2) + '" y="' + (H - 10) + '" text-anchor="middle"' + (dest ? ' style="font-weight:700;fill:var(--ink)"' : "") + ">" + esc(it.rotulo) + "</text>";
+      s += '<rect data-i="' + i + '" x="' + (ml + slot * i) + '" y="' + mt + '" width="' + slot + '" height="' + ph + '" fill="transparent"/>';
+    });
+    s += "</svg>";
+    var el = document.createElement("div"); el.className = "grafico"; el.innerHTML = s;
+    el.querySelectorAll("rect[data-i]").forEach(function (r) {
+      r.addEventListener("pointermove", function (ev) { mostraDica(opt.dica(opt.itens[+r.dataset.i], tot[+r.dataset.i]), ev.clientX, ev.clientY); });
+      r.addEventListener("pointerleave", escondeDica);
+    });
+    return el;
+  }
+
+  /* ---------- Linhas (comparação de lojas) ---------- */
+  function linhas(opt) {
+    var W = 780, H = 320, ml = 62, mr = 150, mt = 18, mb = 30;
+    var pw = W - ml - mr, ph = H - mt - mb, n = opt.rotulos.length;
+    var max = 0; opt.series.forEach(function (sr) { sr.v.forEach(function (x) { if (x > max) max = x; }); });
+    var e = escala(max), topo = e.topo;
+    var x = function (i) { return ml + (n === 1 ? pw / 2 : (pw * i) / (n - 1)); };
+    var y = function (v) { return mt + ph - (v / topo) * ph; };
+    var s = '<svg viewBox="0 0 ' + W + " " + H + '" role="img" aria-label="' + esc(opt.titulo) + '">';
+    for (var g = 0; g <= topo + 1e-9; g += e.passo) {
+      s += '<line x1="' + ml + '" x2="' + (ml + pw) + '" y1="' + y(g) + '" y2="' + y(g) + '" stroke="var(--grade)"/>';
+      s += '<text class="eixo" x="' + (ml - 8) + '" y="' + (y(g) + 4) + '" text-anchor="end">' + curto(g) + "</text>";
+    }
+    opt.rotulos.forEach(function (r, i) { if (n <= 13 || i % 2 === 0) s += '<text class="eixo" x="' + x(i) + '" y="' + (H - 10) + '" text-anchor="middle">' + esc(r) + "</text>"; });
+    (opt.marcas || []).forEach(function (m) {
+      s += '<line x1="' + x(m.i) + '" x2="' + x(m.i) + '" y1="' + mt + '" y2="' + (mt + ph) + '" stroke="var(--nota)" stroke-dasharray="4 4"/>';
+      s += '<text class="eixo" x="' + (x(m.i) + 6) + '" y="' + (mt + 10) + '">' + esc(m.txt) + "</text>";
+    });
+    var fins = [];
+    opt.series.forEach(function (sr) {
+      var d = "", aberto = false, ult = -1;
+      sr.v.forEach(function (v, i) {
+        if (v > 0) { d += (aberto ? " L" : " M") + x(i).toFixed(1) + "," + y(v).toFixed(1); aberto = true; ult = i; } else aberto = false;
+      });
+      s += '<path d="' + d + '" fill="none" stroke="' + sr.cor + '" stroke-width="2.25" stroke-linejoin="round" stroke-linecap="round"/>';
+      sr.v.forEach(function (v, i) { if (v > 0) s += '<circle cx="' + x(i) + '" cy="' + y(v) + '" r="' + (i === ult ? 4.5 : 3) + '" fill="' + sr.cor + '" stroke="var(--card)" stroke-width="2"/>'; });
+      if (ult >= 0) fins.push({ y: y(sr.v[ult]), x: x(ult), sr: sr, v: sr.v[ult] });
+    });
+    fins.sort(function (a, b) { return a.y - b.y; });
+    for (var k = 1; k < fins.length; k++) if (fins[k].y - fins[k - 1].y < 30) fins[k].y = fins[k - 1].y + 30;
+    fins.forEach(function (f) {
+      s += '<circle cx="' + (ml + pw + 14) + '" cy="' + (f.y - 4) + '" r="4.5" fill="' + f.sr.cor + '"/>';
+      s += '<text class="rotulo" x="' + (ml + pw + 24) + '" y="' + f.y + '">' + esc(f.sr.nome.length > 16 ? f.sr.nome.slice(0, 15) + "…" : f.sr.nome) + "</text>";
+      s += '<text class="eixo" x="' + (ml + pw + 24) + '" y="' + (f.y + 13) + '">' + curto(f.v) + "</text>";
+    });
+    s += '<line class="guia" x1="0" x2="0" y1="' + mt + '" y2="' + (mt + ph) + '" stroke="var(--suave)" stroke-width="1" opacity="0"/>';
+    for (var i = 0; i < n; i++) {
+      var x0 = i === 0 ? ml - 10 : (x(i - 1) + x(i)) / 2, x1 = i === n - 1 ? ml + pw + 10 : (x(i) + x(i + 1)) / 2;
+      s += '<rect data-i="' + i + '" x="' + x0 + '" y="' + mt + '" width="' + (x1 - x0) + '" height="' + ph + '" fill="transparent"/>';
+    }
+    s += "</svg>";
+    var el = document.createElement("div"); el.className = "grafico"; el.innerHTML = s;
+    var guia = el.querySelector(".guia");
+    el.querySelectorAll("rect[data-i]").forEach(function (r) {
+      r.addEventListener("pointermove", function (ev) {
+        var i = +r.dataset.i;
+        guia.setAttribute("x1", x(i)); guia.setAttribute("x2", x(i)); guia.setAttribute("opacity", ".5");
+        var ls = opt.series.slice().sort(function (a, b) { return (b.v[i] || 0) - (a.v[i] || 0); });
+        mostraDica("<b>" + esc(opt.rotulos[i]) + "</b>" + ls.map(function (sr) {
+          return '<div class="l"><span><span class="dot" style="background:' + sr.cor + '"></span>' + esc(sr.nome) + "</span><span>" + (sr.v[i] > 0 ? brl0(sr.v[i]) : "—") + "</span></div>";
+        }).join(""), ev.clientX, ev.clientY);
+      });
+      r.addEventListener("pointerleave", function () { guia.setAttribute("opacity", "0"); escondeDica(); });
+    });
+    return el;
+  }
+
+  /* ---------- Blocos ---------- */
+  function cab(eyebrow, titulo, sub) {
+    return '<div class="cab entra"><div class="eyebrow">' + esc(eyebrow) + '</div><h1 class="manchete">' + esc(titulo) + "</h1>" + (sub ? '<p class="sub">' + sub + "</p>" : "") + "</div>";
+  }
+  function legendaCanais(keys) {
+    return '<div class="legenda">' + keys.map(function (k) { return '<span><span class="dot" style="background:' + COR[k] + (k === "99FOOD" ? ";box-shadow:inset 0 0 0 1px rgba(92,26,43,.4)" : "") + '"></span>' + NOME[k] + "</span>"; }).join("") + "</div>";
+  }
+  function miniMix(id, i) {
+    var m = mixLoja(id, i), t = m[0] + m[1] + m[2];
+    if (!t) return "";
+    return '<span class="mini" title="Balcão ' + pct(100 * m[0] / t, 0) + " · iFood " + pct(100 * m[1] / t, 0) + " · 99Food " + pct(100 * m[2] / t, 0) + '">' +
+      m.map(function (v, k) { return v > 0 ? '<i style="width:' + (100 * v / t) + "%;background:" + COR[CANAIS[k]] + '"></i>' : ""; }).join("") + "</span>";
+  }
+  function chipsLoja(l, i) {
+    var c = [];
+    if (l.status === "encerrada") c.push('<span class="chip enc">Encerrada</span>');
+    if (nova(l, i)) c.push('<span class="chip nova">Nova</span>');
+    if (l.troca && l.troca <= M[i] && M[Math.max(0, i - 12)] < l.troca) c.push('<span class="chip">Troca de gestão ' + rot(l.troca) + "</span>");
+    if (suspeitasLoja(l.id, i).length) c.push('<span class="chip dado">Dado a conferir</span>');
+    return c.length ? '<span class="chips">' + c.join("") + "</span>" : "";
+  }
+  var IC = {
+    dado: '<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><ellipse cx="12" cy="5" rx="8" ry="3"/><path d="M4 5v6c0 1.7 3.6 3 8 3s8-1.3 8-3V5M4 11v6c0 1.7 3.6 3 8 3s8-1.3 8-3v-6"/></svg>',
+    queda: '<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 7l6 6 4-4 8 8M21 11v6h-6"/></svg>',
+    alta: '<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 17l6-6 4 4 8-8M21 13V7h-6"/></svg>',
+    confirmar: '<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="M9.5 9a2.5 2.5 0 015 .5c0 1.7-2.5 2-2.5 3.5M12 17h.01"/></svg>',
+    info: '<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="M12 8h.01M11 12h1v4h1"/></svg>',
+    relogio: '<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/></svg>'
+  };
+  var ETQ = { dado: "Dado a conferir", queda: "Queda forte", alta: "Alta forte", confirmar: "A confirmar", info: "Informativo" };
+  function alerta(a) {
+    return '<div class="card al ' + a.tipo + '"><span class="al-ic">' + IC[a.tipo] + "</span><h3>" + esc(a.titulo) + '<span class="etq">' + ETQ[a.tipo] + "</span></h3>" +
+      "<p>" + a.texto + "</p>" + (a.acao ? '<p class="acao">' + esc(a.acao) + "</p>" : "") + "</div>";
+  }
+  function pendente(t, txt) {
+    return '<div class="pendente entra"><span class="al-ic">' + IC.relogio + "</span><div><h3>" + esc(t) + "</h3>" + txt + "</div></div>";
+  }
+  function tabelaOrdenavel(cols, linhas, ordem, aoOrdenar) {
+    var h = '<div class="rolar"><table><thead><tr>' + cols.map(function (c) {
+      var ar = c.ord && ordem.col === c.id ? ' aria-sort="' + (ordem.dir < 0 ? "descending" : "ascending") + '"' : "";
+      return '<th class="' + (c.e ? "e" : "n") + '"' + ar + ' scope="col">' + (c.ord ? '<button type="button" data-ord="' + c.id + '">' + c.nome + "</button>" : c.nome) + "</th>";
+    }).join("") + "</tr></thead><tbody>" + linhas.join("") + "</tbody></table></div>";
+    var el = document.createElement("div"); el.innerHTML = h;
+    el.querySelectorAll("th button").forEach(function (b) {
+      b.addEventListener("click", function () {
+        var c = b.dataset.ord; ordem.dir = ordem.col === c ? -ordem.dir : (c === "nome" ? 1 : -1); ordem.col = c; aoOrdenar();
+      });
+    });
+    return el;
+  }
+  function ordenar(arr, ordem) {
+    return arr.sort(function (a, b) {
+      var x = a[ordem.col], y = b[ordem.col];
+      if (ordem.col === "nome") return ordem.dir * String(x).localeCompare(String(y), "pt-BR");
+      if (x === null || x === undefined) return 1; if (y === null || y === undefined) return -1;
+      return ordem.dir * (x - y);
+    });
+  }
+
+  /* ---------- Ranking (compartilhado entre telas) ---------- */
+  function linhasRanking(i) {
+    var arr = D.lojas.filter(function (l) { return visivel(l) && fat(l.id, i) > 0; }).map(function (l) {
+      return { id: l.id, nome: l.nome, l: l, fat: fat(l.id, i), mom: mom(l.id, i), yoy: yoy(l.id, i, 1), yoy3: yoy(l.id, i, 3) };
+    });
+    // Nota: média ponderada da posição (0 a 100) em cada critério; critério sem valor sai da média da loja
+    ["fat", "mom", "yoy", "yoy3"].forEach(function (c) {
+      var vs = arr.filter(function (r) { return r[c] !== null; }).sort(function (a, b) { return a[c] - b[c]; });
+      vs.forEach(function (r, k) { r["p_" + c] = vs.length > 1 ? (100 * k) / (vs.length - 1) : 100; });
+    });
+    arr.forEach(function (r) {
+      var s = 0, w = 0;
+      ["fat", "mom", "yoy", "yoy3"].forEach(function (c) { var p = S.pesos[c]; if (p && r["p_" + c] !== undefined) { s += p * r["p_" + c]; w += p; } });
+      r.nota = w ? s / w : null;
+    });
+    return arr;
+  }
+
+  /* ---------- Telas ---------- */
+  var TELAS = [
+    { id: "rede", nome: "Rede", render: function (t) {
+      var i = S.i, f = redeFat(i), fa = redeFat(i - 1), vm = variacao(f, fa), vy = redeYoYMesmas(i), vt = redeYoYTotal(i);
+      var nLojas = D.lojas.filter(function (l) { return l.status !== "outra_marca" && fat(l.id, i) > 0; }).length;
+      var nNovas = D.lojas.filter(function (l) { return l.status === "ativa" && fat(l.id, i) > 0 && nova(l, i); }).length;
+      var canalTxt = S.canal === "TODOS" ? "A rede" : "O " + NOME[S.canal] + " da rede";
+      var titulo = canalTxt + " faturou " + curto(f) + " em " + mesNome(M[i]) + (vm === null ? "." : ", " + pct(Math.abs(vm)) + (vm >= 0 ? " acima de " : " abaixo de ") + mesNome(M[i - 1]) + ".");
+      var sub = vy === null ? (S.canal === "99FOOD" ? "O 99Food começou em jan/2026: ainda não há comparação com o ano anterior." : "Ainda não há 12 meses de base para comparar com o ano anterior.")
+        : "Nas mesmas lojas, " + (S.canal === "TODOS" ? "balcão + iFood ficou " : "ficou ") + "<b>" + sinal(vy) + "</b> contra " + rotLongo(M[i - 12]) +
+          ". Contando lojas que abriram e fecharam no período, " + sinal(vt) + ".";
+      t.innerHTML = cab("Rede · " + rotLongo(M[i]), titulo, sub) +
+        '<div class="grade-4 entra">' +
+          '<div class="card kpi"><span class="kpi-rot">Faturamento · ' + esc(NOME[S.canal]) + '</span><span class="kpi-val">' + curto(f) + '</span><span class="kpi-nota">' + brl(f) + "</span></div>" +
+          '<div class="card kpi"><span class="kpi-rot">Contra o mês anterior</span>' + varGrande(vm, "vs " + rotLongo(M[i - 1])) + "</div>" +
+          '<div class="card kpi"><span class="kpi-rot">Contra o ano anterior · mesmas lojas</span>' + varGrande(vy, i >= 12 ? "vs " + rotLongo(M[i - 12]) + (S.canal === "TODOS" ? " · balcão + iFood" : "") : "sem base") + "</div>" +
+          '<div class="card kpi"><span class="kpi-rot">Lojas com venda no mês</span><span class="kpi-val">' + nLojas + '</span><span class="kpi-nota">' + (nNovas ? nNovas + " com menos de 1 ano de histórico" : "nenhuma loja nova no período") + "</span></div>" +
+        "</div>" +
+        '<div class="card pad entra" id="g-rede"><div class="secao-cab"><h2>Últimos 13 meses</h2>' + legendaCanais(S.canal === "TODOS" ? CANAIS : [S.canal]) + "</div></div>" +
+        '<div class="grade-2 entra"><div class="card pad" id="mix"></div><div class="card pad" id="explica"></div></div>';
+      var ini = Math.max(0, i - 12), itens = [];
+      for (var j = ini; j <= i; j++) { var it = { rotulo: rot(M[j]) }; CANAIS.forEach(function (k, kk) { it[k] = chs().indexOf(kk) > -1 ? redeFat(j, kk) : 0; }); itens.push(it); }
+      var g = t.querySelector("#g-rede");
+      g.appendChild(colunas({ titulo: "Faturamento da rede por mês", itens: itens, series: S.canal === "TODOS" ? CANAIS : [S.canal], destaque: itens.length - 1, rotular: "destaque",
+        dica: function (it, tt) { return "<b>" + esc(it.rotulo) + "</b>" + CANAIS.filter(function (k) { return it[k] > 0; }).map(function (k) { return '<div class="l"><span><span class="dot" style="background:' + COR[k] + '"></span>' + NOME[k] + "</span><span>" + brl0(it[k]) + "</span></div>"; }).join("") + '<div class="l"><span><b>Total</b></span><span><b>' + brl0(tt) + "</b></span></div>"; } }));
+      g.insertAdjacentHTML("beforeend", '<details class="tabela"><summary>Ver em tabela</summary><div class="rolar"><table><thead><tr><th>Mês</th><th>Balcão</th><th>iFood</th><th>99Food</th><th>Total</th><th>vs mês ant.</th></tr></thead><tbody>' +
+        itens.map(function (it, k) { var tt = it.DEGUST + it.IFOOD + it["99FOOD"], pv = k ? itens[k - 1].DEGUST + itens[k - 1].IFOOD + itens[k - 1]["99FOOD"] : redeFat(ini - 1);
+          return "<tr><td>" + it.rotulo + "</td><td>" + (it.DEGUST ? brl0(it.DEGUST) : "—") + "</td><td>" + (it.IFOOD ? brl0(it.IFOOD) : "—") + "</td><td>" + (it["99FOOD"] ? brl0(it["99FOOD"]) : "—") + "</td><td><b>" + brl0(tt) + "</b></td><td>" + varTxt(variacao(tt, pv)) + "</td></tr>"; }).join("") +
+        "</tbody></table></div></details>");
+      // Mix de canais
+      var mx = t.querySelector("#mix"), cs = CANAIS.map(function (k, kk) { return redeFat(i, kk); }), tt = cs[0] + cs[1] + cs[2];
+      mx.innerHTML = '<div class="secao-cab"><h2>De onde veio o faturamento</h2><small>' + rot(M[i]) + "</small></div>" +
+        '<div class="mix-barra">' + cs.map(function (v, k) { return v ? '<i style="width:' + (100 * v / tt) + "%;background:" + COR[CANAIS[k]] + '"></i>' : ""; }).join("") + "</div>" +
+        '<div style="display:flex;flex-direction:column;gap:10px;margin-top:14px">' + CANAIS.map(function (k, kk) {
+          var vmc = variacao(cs[kk], redeFat(i - 1, kk));
+          return '<div style="display:grid;grid-template-columns:auto 1fr auto auto auto;gap:10px;align-items:center"><span class="dot" style="background:' + COR[k] + '"></span><span>' + NOME[k] + '</span><b class="num">' + brl0(cs[kk]) + '</b><span class="num" style="color:var(--suave);font-size:13px;min-width:44px;text-align:right">' + (tt ? pct(100 * cs[kk] / tt) : "—") + '</span><span style="font-size:13px;min-width:64px;text-align:right">' + varTxt(vmc) + "</span></div>";
+        }).join("") + '</div><p class="kpi-nota" style="margin:12px 0 0">A última coluna é a variação contra ' + rotLongo(M[i - 1]) + ". O mix sempre mostra os 3 canais, mesmo com filtro.</p>";
+      // Quem explica a variação
+      var deltas = D.lojas.filter(function (l) { return l.status !== "outra_marca"; }).map(function (l) { return { l: l, d: fat(l.id, i) - fat(l.id, i - 1) }; }).filter(function (x) { return Math.abs(x.d) > 0; });
+      var altas = deltas.filter(function (x) { return x.d > 0; }).sort(function (a, b) { return b.d - a.d; }).slice(0, 5);
+      var quedas = deltas.filter(function (x) { return x.d < 0; }).sort(function (a, b) { return a.d - b.d; }).slice(0, 5);
+      var maxD = Math.max.apply(null, altas.concat(quedas).map(function (x) { return Math.abs(x.d); }).concat([1]));
+      function bloco(lista, cor) {
+        return lista.length ? lista.map(function (x) {
+          var susp = suspeitasLoja(x.l.id, i).length ? ' <span class="chip dado">dado a conferir</span>' : "";
+          return '<div class="mov-l"><span>' + esc(x.l.nome) + susp + "</span><strong>" + (x.d > 0 ? "+" : "−") + curto(Math.abs(x.d)).replace("−", "") + '</strong><span class="b"><i style="width:' + (100 * Math.abs(x.d) / maxD) + "%;background:" + cor + '"></i></span></div>';
+        }).join("") : '<p class="kpi-nota">Nenhuma.</p>';
+      }
+      t.querySelector("#explica").innerHTML = '<div class="secao-cab"><h2>Quem mais mexeu no resultado</h2><small>em R$, vs ' + rot(M[i - 1]) + "</small></div>" +
+        '<div class="grade-2" style="gap:18px"><div class="mov"><b style="color:var(--pos);font-size:13px">Maiores altas</b>' + bloco(altas, "var(--pos)") + '</div><div class="mov"><b style="color:var(--neg);font-size:13px">Maiores quedas</b>' + bloco(quedas, "var(--neg)") + "</div></div>";
+    } },
+
+    { id: "ranking", nome: "Ranking", render: function (t) {
+      var i = S.i;
+      t.innerHTML = cab("Ranking · " + rotLongo(M[i]), "Quem está indo melhor, por uma nota que mistura tamanho e crescimento.",
+        "A nota vai de 0 a 100. Em cada critério a loja ganha uma posição (100 = melhor da rede, 0 = pior), e a nota é a média dessas posições com os pesos abaixo. Peso 0 tira o critério da conta. Clique no título de uma coluna para ordenar.") +
+        '<div class="card pad entra"><div class="secao-cab"><h2>Pesos da nota</h2><small>Lojas sem base para um critério não são punidas: ele só sai da média delas.</small></div><div class="pesos" id="pesos"></div></div>' +
+        '<div class="card pad entra" id="tab-rank"></div>';
+      var P = [["fat", "Faturamento do mês", "Tamanho da loja"], ["mom", "vs mês anterior", "Ritmo de curto prazo"], ["yoy", "vs ano anterior", "Mesmo mês, mesma base"], ["yoy3", "Últimos 3 meses vs ano anterior", "Tendência sem o ruído de um mês"]];
+      var pw = t.querySelector("#pesos");
+      pw.innerHTML = P.map(function (p) { return '<div class="peso"><label for="pe-' + p[0] + '">' + p[1] + ' <output id="po-' + p[0] + '">' + S.pesos[p[0]] + '</output></label><input type="range" id="pe-' + p[0] + '" min="0" max="3" step="1" value="' + S.pesos[p[0]] + '"><small>' + p[2] + "</small></div>"; }).join("");
+      pw.querySelectorAll("input").forEach(function (inp) {
+        inp.addEventListener("input", function () { var c = inp.id.slice(3); S.pesos[c] = +inp.value; t.querySelector("#po-" + c).textContent = inp.value; desenha(); });
+      });
+      function desenha() {
+        var arr = ordenar(linhasRanking(i), S.ordR), alvo = t.querySelector("#tab-rank");
+        var porNota = arr.slice().sort(function (a, b) { return (b.nota || 0) - (a.nota || 0); }), pos = {};
+        porNota.forEach(function (r, k) { pos[r.id] = k + 1; });
+        var cols = [{ id: "cmp", nome: "Comparar" }, { id: "pos", nome: "#" }, { id: "nome", nome: "Loja", ord: 1, e: 1 }, { id: "fat", nome: "Faturamento", ord: 1 }, { id: "mom", nome: "vs mês ant.", ord: 1 },
+          { id: "yoy", nome: "vs ano ant.", ord: 1 }, { id: "yoy3", nome: "3 meses vs ano ant.", ord: 1 }, { id: "mix", nome: "Canais", e: 1 }, { id: "nota", nome: "Nota", ord: 1 }];
+        var ls = arr.map(function (r) {
+          var on = S.cmp.indexOf(r.id) > -1;
+          return '<tr><td class="cmp"><input type="checkbox" data-id="' + r.id + '"' + (on ? " checked" : "") + ' aria-label="Comparar ' + esc(r.nome) + '"></td><td class="n" style="color:var(--acento);font-weight:800">' + pos[r.id] + '</td><td class="loja e">' + esc(r.nome) + chipsLoja(r.l, i) + "</td><td>" + brl0(r.fat) + "</td><td>" + varTxt(r.mom) + "</td><td>" + varTxt(r.yoy) + "</td><td>" + varTxt(r.yoy3) + '</td><td class="e">' + miniMix(r.id, i) + '</td><td><span class="nota-bar"><i style="width:' + Math.round((r.nota || 0) * 0.6) + 'px"></i><b>' + (r.nota === null ? "—" : Math.round(r.nota)) + "</b></span></td></tr>";
+        });
+        alvo.innerHTML = '<div class="secao-cab"><h2>' + arr.length + " lojas com venda em " + rot(M[i]) + '</h2><small>Marque até 4 lojas para a aba Loja × loja. ' + (S.canal === "TODOS" ? "vs ano ant. usa balcão + iFood." : "Canal: " + NOME[S.canal] + ".") + "</small></div>";
+        alvo.appendChild(tabelaOrdenavel(cols, ls, S.ordR, desenha));
+        alvo.querySelectorAll("input[type=checkbox]").forEach(function (c) {
+          c.addEventListener("change", function () {
+            var id = +c.dataset.id, k = S.cmp.indexOf(id);
+            if (c.checked && k < 0) { if (S.cmp.length >= 4) S.cmp.shift(); S.cmp.push(id); }
+            if (!c.checked && k > -1) S.cmp.splice(k, 1);
+            desenha();
+          });
+        });
+      }
+      desenha();
+    } },
+
+    { id: "comparar", nome: "Loja × loja", render: function (t) {
+      var i = S.i, ini = Math.max(0, i - 12);
+      t.innerHTML = cab("Loja × loja · " + NOME[S.canal], "Compare até 4 lojas mês a mês.",
+        "As linhas mostram o faturamento dos 13 meses até " + rotLongo(M[i]) + ". Um buraco na linha é mês sem venda no canal escolhido.") +
+        '<div class="card pad entra"><div class="pick" id="pick"></div></div>' +
+        '<div class="card pad entra" id="g-cmp"></div><div class="card pad entra" id="t-cmp"></div>';
+      var opcoes = D.lojas.slice().sort(function (a, b) { return a.nome.localeCompare(b.nome, "pt-BR"); });
+      var pk = t.querySelector("#pick");
+      pk.innerHTML = [0, 1, 2, 3].map(function (k) {
+        return '<label><span class="dot" style="background:' + SERIE[k] + '"></span><select data-k="' + k + '" aria-label="Loja ' + (k + 1) + '"><option value="">—</option>' +
+          opcoes.map(function (l) { return '<option value="' + l.id + '"' + (S.cmp[k] === l.id ? " selected" : "") + ">" + esc(l.nome) + (l.status === "encerrada" ? " (encerrada)" : l.status === "outra_marca" ? " (outra marca)" : "") + "</option>"; }).join("") + "</select></label>";
+      }).join("");
+      pk.querySelectorAll("select").forEach(function (sel) {
+        sel.addEventListener("change", function () {
+          var novo = []; pk.querySelectorAll("select").forEach(function (s2) { if (s2.value) novo.push(+s2.value); });
+          S.cmp = novo.filter(function (x, k) { return novo.indexOf(x) === k; }); desenha();
+        });
+      });
+      function desenha() {
+        var sel = S.cmp.filter(function (id) { return LOJA[id]; });
+        var rotulos = [], marcas = [];
+        for (var j = ini; j <= i; j++) rotulos.push(rot(M[j]));
+        var series = sel.map(function (id) {
+          var v = []; for (var j = ini; j <= i; j++) v.push(fat(id, j));
+          var l = LOJA[id];
+          if (l.troca) { var p = M.indexOf(l.troca); if (p >= ini && p <= i) marcas.push({ i: p - ini, txt: "troca " + l.nome }); }
+          return { nome: l.nome, cor: SERIE[[0, 1, 2, 3].filter(function (k) { return S.cmp[k] === id; })[0]], v: v, id: id };
+        });
+        var g = t.querySelector("#g-cmp"), tb = t.querySelector("#t-cmp");
+        if (!series.length) { g.innerHTML = '<p class="vazio">Escolha pelo menos uma loja acima, ou marque lojas na aba Ranking.</p>'; tb.innerHTML = ""; return; }
+        g.innerHTML = '<div class="secao-cab"><h2>Faturamento mensal · ' + esc(NOME[S.canal]) + '</h2><div class="legenda">' + series.map(function (s) { return '<span><span class="dot" style="background:' + s.cor + '"></span>' + esc(s.nome) + "</span>"; }).join("") + "</div></div>";
+        g.appendChild(linhas({ titulo: "Faturamento mensal das lojas escolhidas", rotulos: rotulos, series: series, marcas: marcas }));
+        g.insertAdjacentHTML("beforeend", '<details class="tabela"><summary>Ver em tabela</summary><div class="rolar"><table><thead><tr><th>Mês</th>' + series.map(function (s) { return "<th>" + esc(s.nome) + "</th>"; }).join("") + "</tr></thead><tbody>" +
+          rotulos.map(function (r, k) { return "<tr><td>" + r + "</td>" + series.map(function (s) { return "<td>" + (s.v[k] > 0 ? brl0(s.v[k]) : "—") + "</td>"; }).join("") + "</tr>"; }).join("") + "</tbody></table></div></details>");
+        tb.innerHTML = '<div class="secao-cab"><h2>Lado a lado em ' + rotLongo(M[i]) + "</h2><small>Participação dos canais sempre sobre os 3 canais.</small></div>" +
+          '<div class="rolar"><table><thead><tr><th>Loja</th><th>Faturamento</th><th>vs mês ant.</th><th>vs ano ant.</th><th>3 meses vs ano ant.</th><th>Balcão</th><th>iFood</th><th>99Food</th><th>Cancel. 99Food</th></tr></thead><tbody>' +
+          series.map(function (s) {
+            var m = mixLoja(s.id, i), tt = m[0] + m[1] + m[2], p9 = ped99(s.id, i);
+            return '<tr><td class="loja"><span class="dot" style="background:' + s.cor + ';margin-right:8px"></span>' + esc(s.nome) + chipsLoja(LOJA[s.id], i) + "</td><td>" + brl0(fat(s.id, i)) + "</td><td>" + varTxt(mom(s.id, i)) + "</td><td>" + varTxt(yoy(s.id, i, 1)) + "</td><td>" + varTxt(yoy(s.id, i, 3)) + "</td>" +
+              m.map(function (v) { return "<td>" + (tt && v ? pct(100 * v / tt) : "—") + "</td>"; }).join("") + "<td>" + (p9 && p9[0] ? pct(100 * p9[1] / p9[0]) : "—") + "</td></tr>";
+          }).join("") + "</tbody></table></div>";
+      }
+      desenha();
+    } },
+
+    { id: "f99", nome: "99Food", render: function (t) {
+      var i = S.i, mesI = M[i];
+      var lojas = D.lojas.filter(function (l) { return visivel(l) && ped99(l.id, i) && ped99(l.id, i)[0] > 0; });
+      var P = 0, C = 0, V = 0, F = 0;
+      lojas.forEach(function (l) { var p = ped99(l.id, i); P += p[0]; C += p[1]; V += p[3]; F += val(l.id, 2, i); });
+      var taxa = P ? 100 * C / P : null, ticket = P - C ? F / (P - C) : null;
+      t.innerHTML = cab("99Food · " + rotLongo(mesI), P ? "A rede recebeu " + fmtN.format(P) + " pedidos no 99Food, com " + pct(taxa) + " cancelados." : "Sem pedidos do 99Food neste mês.",
+        "Pedidos e cancelamentos vêm do relatório por pedido do 99Food. O ticket é o faturamento da loja dividido pelos pedidos concluídos.") +
+        '<div class="grade-4 entra">' +
+          '<div class="card kpi"><span class="kpi-rot">Pedidos</span><span class="kpi-val">' + fmtN.format(P) + '</span><span class="kpi-nota">' + lojas.length + " lojas com pedido</span></div>" +
+          '<div class="card kpi"><span class="kpi-rot">Cancelados</span><span class="kpi-val">' + (taxa === null ? "—" : pct(taxa)) + '</span><span class="kpi-nota">' + fmtN.format(C) + " pedidos · " + brl0(V) + " que não entraram</span></div>" +
+          '<div class="card kpi"><span class="kpi-rot">Ticket médio</span><span class="kpi-val">' + (ticket === null ? "—" : brl(ticket)) + '</span><span class="kpi-nota">por pedido concluído</span></div>' +
+          '<div class="card kpi"><span class="kpi-rot">Faturamento 99Food</span><span class="kpi-val">' + curto(F) + '</span><span class="kpi-nota">' + brl(F) + "</span></div>" +
+        '</div><div class="card pad entra" id="g99"><div class="secao-cab"><h2>Taxa de cancelamento da rede</h2><small>% dos pedidos, por mês</small></div></div><div class="card pad entra" id="t99"></div>';
+      var itens = [];
+      for (var j = Math.max(0, i - 12); j <= i; j++) {
+        var pp = 0, cc = 0;
+        D.lojas.forEach(function (l) { var d = ped99(l.id, j); if (d) { pp += d[0]; cc += d[1]; } });
+        if (pp) itens.push({ rotulo: rot(M[j]), taxa: 100 * cc / pp, pp: pp, cc: cc });
+      }
+      t.querySelector("#g99").appendChild(colunas({ titulo: "Taxa de cancelamento do 99Food por mês", itens: itens, series: ["taxa"], cores: { taxa: "var(--c-99)" }, destaque: itens.length - 1, rotular: "todos", altura: 230,
+        eixo: function (g) { return pct(g, 0); }, rotulo: function (v) { return pct(v); },
+        dica: function (it) { return "<b>" + esc(it.rotulo) + '</b><div class="l"><span>Pedidos</span><span>' + fmtN.format(it.pp) + '</span></div><div class="l"><span>Cancelados</span><span>' + fmtN.format(it.cc) + " · " + pct(it.taxa) + "</span></div>"; } }));
+      t.querySelectorAll("#g99 path").forEach(function (p) { p.setAttribute("stroke", "var(--titulo)"); p.setAttribute("stroke-width", "1"); });
+      function desenha() {
+        var arr = lojas.map(function (l) {
+          var p = ped99(l.id, i), pa = ped99(l.id, i - 1), f = val(l.id, 2, i);
+          return { id: l.id, nome: l.nome, l: l, pedidos: p[0], canc: p[0] ? 100 * p[1] / p[0] : null, ticket: p[0] - p[1] ? f / (p[0] - p[1]) : null, fat: f, vped: pa && pa[0] ? variacao(p[0], pa[0]) : null, vcanc: p[3] };
+        });
+        ordenar(arr, S.ord9);
+        var alvo = t.querySelector("#t99");
+        alvo.innerHTML = '<div class="secao-cab"><h2>Por loja</h2><small>Taxa em destaque quando passa de 1,5× a taxa da rede (' + (taxa === null ? "—" : pct(taxa)) + ").</small></div>";
+        alvo.appendChild(tabelaOrdenavel([{ id: "nome", nome: "Loja", ord: 1, e: 1 }, { id: "pedidos", nome: "Pedidos", ord: 1 }, { id: "vped", nome: "Pedidos vs mês ant.", ord: 1 }, { id: "canc", nome: "Cancelados", ord: 1 }, { id: "vcanc", nome: "Valor cancelado", ord: 1 }, { id: "ticket", nome: "Ticket", ord: 1 }, { id: "fat", nome: "Faturamento", ord: 1 }],
+          arr.map(function (r) {
+            var alto = taxa !== null && r.canc !== null && r.canc > 1.5 * taxa;
+            return '<tr><td class="loja e">' + esc(r.nome) + "</td><td>" + fmtN.format(r.pedidos) + "</td><td>" + varTxt(r.vped) + "</td><td>" + (r.canc === null ? "—" : (alto ? '<span class="chip dado">' + pct(r.canc) + "</span>" : pct(r.canc))) + "</td><td>" + brl0(r.vcanc) + "</td><td>" + (r.ticket === null ? "—" : brl(r.ticket)) + "</td><td>" + brl0(r.fat) + "</td></tr>";
+          }), S.ord9, desenha));
+      }
+      desenha();
+    } },
+
+    { id: "alertas", nome: "Alertas", selo: function () { return contaAlertas(S.i); }, render: function (t) {
+      var i = S.i, A = montaAlertas(i);
+      function grupo(titulo, desc, lista) {
+        return '<section class="alertas entra"><div class="secao-cab" style="margin:8px 0 0"><h2>' + titulo + "</h2><small>" + desc + "</small></div>" +
+          (lista.length ? lista.map(alerta).join("") : '<div class="card vazio">Nada aqui em ' + rot(M[i]) + ".</div>") + "</section>";
+      }
+      t.innerHTML = cab("Alertas · " + rotLongo(M[i]), A.dado.length + A.queda.length ? "O que olhar primeiro em " + mesNome(M[i]) + "." : "Nenhum alerta forte em " + mesNome(M[i]) + ".",
+        "Primeiro os dados a conferir: uma queda pode ser só uma carga incompleta. Depois, os movimentos de negócio.") +
+        grupo("Dados a conferir", "Zerou depois de vender, ou veio abaixo de 35% do normal da loja", A.dado) +
+        grupo("Movimentos fortes", "Queda de 20% ou mais, ou alta de 25% ou mais, contra o mês anterior", A.queda.concat(A.alta)) +
+        grupo("Para você decidir ou confirmar", "Regras de cadastro que dependem de você", A.conf) +
+        grupo("Informativos", "Contexto para ler os números", A.info) +
+        '<section class="card pad entra" id="hist"></section>';
+      var linhasH = [];
+      D.lojas.filter(function (l) { return l.status === "ativa"; }).forEach(function (l) {
+        [0, 1, 2].forEach(function (k) {
+          var ms = [];
+          for (var j = Math.max(0, i - 12); j <= i; j++) { var s = suspeito(l.id, k, j); if (s) ms.push(rot(M[j]) + (s.tipo === "zero" ? " (zerou)" : " (" + pct(s.p, 0) + " do normal)")); }
+          if (ms.length) linhasH.push("<tr><td class=\"loja\">" + esc(l.nome) + "</td><td class=\"e\">" + NOME[CANAIS[k]] + '</td><td class="e" style="white-space:normal">' + ms.join(", ") + "</td></tr>");
+        });
+      });
+      t.querySelector("#hist").innerHTML = '<div class="secao-cab"><h2>Meses suspeitos nos últimos 13 meses</h2><small>Lista para levar ao Téo</small></div>' +
+        (linhasH.length ? '<div class="rolar"><table><thead><tr><th>Loja</th><th class="e">Canal</th><th class="e">Meses</th></tr></thead><tbody>' + linhasH.join("") + "</tbody></table></div>" : '<p class="vazio">Nenhum.</p>');
+    } },
+
+    { id: "produtos", nome: "Produtos", render: function (t) {
+      var i = S.i, pi = i - PI0;
+      if (!D.produtos.length) {
+        t.innerHTML = cab("Produtos da rede", "Mais vendidos e rupturas que se repetem entre lojas.", "") +
+          pendente("Aguardando os blocos G4 e G5", "<p>Salve os resultados de produtos do <code>APP_03_extracao_rede.sql</code> como .csv e rode o gerador de novo.</p>");
+        return;
+      }
+      if (pi < 0) {
+        t.innerHTML = cab("Produtos · " + rotLongo(M[i]), "Sem dados de produto para este mês.", "A extração de produtos cobre de " + rotLongo(D.pmeses[0]) + " a " + rotLongo(D.pmeses[D.pmeses.length - 1]) + ". Escolha um mês nesse intervalo.");
+        return;
+      }
+      function pv(d, j) { return j < 0 ? 0 : chs().reduce(function (s, k) { return s + d.v[k][j]; }, 0); }
+      function pu(d, j) { return j < 0 ? 0 : chs().reduce(function (s, k) { return s + d.u[k][j]; }, 0); }
+      function pyoy(d, j) {
+        if (j - 12 < 0) return null;
+        var a = 0, b = 0, ok = false;
+        chsYoY().forEach(function (k) { if (d.v[k][j] > 0 && d.v[k][j - 12] > 0) { a += d.v[k][j]; b += d.v[k][j - 12]; ok = true; } });
+        return ok ? variacao(a, b) : null;
+      }
+      var totMes = D.produtos.reduce(function (s, d) { return s + pv(d, pi); }, 0);
+      var arr = D.produtos.map(function (d, n) { return { n: n, nome: d.nome, cat: d.cat, d: d, fat: pv(d, pi), un: pu(d, pi), mom: variacao(pv(d, pi), pv(d, pi - 1)), yoy: pyoy(d, pi) }; })
+        .filter(function (r) { return r.fat > 0; });
+      arr.forEach(function (r) { r.part = totMes ? 100 * r.fat / totMes : 0; });
+      var lider = arr.slice().sort(function (a, b) { return b.fat - a.fat; })[0];
+      var R = rupturasDoMes(i), repet = R.grupos.filter(function (g) { return g.lojas.length >= 2 && !g.sazonal; });
+      t.innerHTML = cab("Produtos · " + rotLongo(M[i]) + " · " + NOME[S.canal],
+        lider ? lider.nome + " liderou " + mesNome(M[i]) + ", com " + curto(lider.fat) + "." : "Sem vendas de produto neste mês.",
+        "Tamanhos somados por família (o iFood mistura tamanhos desde jul/2026). Sem caldas e coberturas, só produtos identificados: " + curto(totMes) + " no mês, " + (redeFat(i) ? pct(100 * totMes / redeFat(i), 0) : "—") + " do faturamento da rede." +
+        (R.ok ? " Em " + mesNome(M[i]) + ", <b>" + R.validas + " rupturas</b> em " + R.nLojas + " lojas; " + repet.length + " produtos pararam em 2 ou mais lojas ao mesmo tempo." : "")) +
+        '<div class="card pad entra" id="p-rank"></div>' +
+        '<div class="grade-2 entra"><div class="card pad" id="p-cat"></div><div class="card pad" id="p-rep"></div></div>' +
+        '<div class="card pad entra" id="p-loja"></div>';
+      // Ranking de produtos
+      var busca = "", mostrarTodos = false;
+      var pr = t.querySelector("#p-rank");
+      pr.innerHTML = '<div class="secao-cab"><h2>Ranking de produtos</h2><label style="font-size:13px;font-weight:700;color:var(--suave);display:inline-flex;gap:8px;align-items:center">Buscar <input type="search" id="p-busca" style="font:inherit;font-size:14px;min-height:36px;border:1px solid var(--borda);border-radius:10px;padding:0 10px;width:200px" placeholder="ex.: cenoura"></label></div><div id="p-tab"></div>';
+      function desenhaRank() {
+        var lst = ordenar(arr.filter(function (r) { return !busca || sem(r.nome + " " + r.cat).indexOf(busca) > -1; }), S.ordP);
+        var corte = mostrarTodos || busca ? lst : lst.slice(0, 25), pos = {};
+        arr.slice().sort(function (a, b) { return b.fat - a.fat; }).forEach(function (r, k) { pos[r.n] = k + 1; });
+        var alvo = pr.querySelector("#p-tab"); alvo.innerHTML = "";
+        alvo.appendChild(tabelaOrdenavel([{ id: "pos", nome: "#" }, { id: "nome", nome: "Produto", ord: 1, e: 1 }, { id: "cat", nome: "Categoria", e: 1 }, { id: "fat", nome: "Faturamento", ord: 1 }, { id: "un", nome: "Unidades", ord: 1 },
+          { id: "mom", nome: "vs mês ant.", ord: 1 }, { id: "yoy", nome: "vs ano ant.", ord: 1 }, { id: "part", nome: "% da rede", ord: 1 }, { id: "mix", nome: "Canais", e: 1 }],
+          corte.map(function (r) {
+            var m = [0, 1, 2].map(function (k) { return r.d.v[k][pi]; }), tt = m[0] + m[1] + m[2];
+            return '<tr><td class="n" style="color:var(--acento);font-weight:800">' + pos[r.n] + '</td><td class="loja e">' + esc(r.nome) + '</td><td class="e" style="color:var(--suave)">' + esc(r.cat) + "</td><td>" + brl0(r.fat) + "</td><td>" + fmtN.format(r.un) + "</td><td>" + varTxt(r.mom) + "</td><td>" + varTxt(r.yoy) + "</td><td>" + pct(r.part) + '</td><td class="e"><span class="mini">' +
+              m.map(function (v, k) { return v > 0 ? '<i style="width:' + (100 * v / tt) + "%;background:" + COR[CANAIS[k]] + '"></i>' : ""; }).join("") + "</span></td></tr>";
+          }), S.ordP, desenhaRank));
+        if (!busca && lst.length > 25) {
+          alvo.insertAdjacentHTML("beforeend", '<p style="margin:12px 0 0"><button type="button" class="link" id="p-mais">' + (mostrarTodos ? "Mostrar só os 25 primeiros" : "Mostrar todos os " + lst.length + " produtos") + "</button></p>");
+          alvo.querySelector("#p-mais").addEventListener("click", function () { mostrarTodos = !mostrarTodos; desenhaRank(); });
+        }
+      }
+      pr.querySelector("#p-busca").addEventListener("input", function (e) { busca = sem(e.target.value.trim()); desenhaRank(); });
+      desenhaRank();
+      // Categorias
+      var cats = {};
+      arr.forEach(function (r) { cats[r.cat] = (cats[r.cat] || 0) + r.fat; });
+      var lc = Object.keys(cats).map(function (c) { return { rot: c, v: cats[c] }; }).sort(function (a, b) { return b.v - a.v; }).slice(0, 10);
+      var maxC = lc.length ? lc[0].v : 1;
+      t.querySelector("#p-cat").innerHTML = '<div class="secao-cab"><h2>Por categoria</h2><small>' + rot(M[i]) + ", 10 maiores</small></div>" +
+        '<div class="mov">' + lc.map(function (c) { return '<div class="mov-l"><span>' + esc(c.rot) + "</span><strong>" + curto(c.v) + " · " + pct(100 * c.v / totMes, 0) + '</strong><span class="b"><i style="width:' + (100 * c.v / maxC) + '%;background:var(--acento)"></i></span></div>'; }).join("") + "</div>";
+      // Rupturas que se repetem
+      var rp = t.querySelector("#p-rep");
+      if (!R.ok) {
+        rp.innerHTML = '<div class="secao-cab"><h2>Rupturas que se repetem</h2></div><p class="vazio" style="padding:0">' + R.motivo + "</p>";
+      } else {
+        rp.innerHTML = '<div class="secao-cab"><h2>Rupturas que se repetem</h2><small>Parou em 2 ou mais lojas no mesmo mês</small></div>' +
+          (repet.length ? '<div class="mov">' + repet.slice(0, 10).map(function (g) {
+            return '<div class="mov-l"><span><b>' + esc(g.nome) + '</b> <span class="chip">' + NOME[g.canal] + "</span></span><strong>" + g.lojas.length + " lojas</strong>" +
+              '<span style="grid-column:1/-1;font-size:12px;color:var(--suave)">' + esc(g.lojas.map(function (x) { return LOJA[x.loja].nome; }).join(", ")) + (g.todos === g.lojas.length ? " · parou em todos os canais dessas lojas" : g.todos ? " · " + g.todos + " sem venda em nenhum canal" : "") + "</span></div>";
+          }).join("") + "</div>" : '<p class="vazio" style="padding:0">Nenhum produto parou em mais de uma loja.</p>') +
+          '<p class="kpi-nota" style="margin:14px 0 0">Quando o mesmo produto para em várias lojas ao mesmo tempo, a causa costuma estar na produção ou no insumo, não na loja.' + (R.ignoradas ? " " + R.ignoradas + " rupturas de lojas com dado a conferir ficaram de fora." : "") + "</p>";
+      }
+      // Rupturas por loja
+      var pl = t.querySelector("#p-loja");
+      if (!R.ok) { pl.hidden = true; return; }
+      var porLoja = {};
+      R.validasLista.forEach(function (x) {
+        var o = porLoja[x.loja] || (porLoja[x.loja] = { id: x.loja, nome: LOJA[x.loja].nome, bal: 0, f99: 0, saz: 0, itens: [] });
+        if (x.sazonal) o.saz++; else { if (x.canal === "DEGUST") o.bal++; else o.f99++; o.itens.push(x.nome + (x.canal === "DEGUST" ? "" : " (99Food)")); }
+      });
+      var lojasR = Object.keys(porLoja).map(function (k) { var o = porLoja[k]; o.total = o.bal + o.f99; return o; }).filter(function (o) { return o.total > 0; });
+      function desenhaLoja() {
+        ordenar(lojasR, S.ordPL);
+        pl.innerHTML = '<div class="secao-cab"><h2>Rupturas por loja</h2><small>Vendeu em 2 dos 3 meses anteriores (média ≥ 5 un.) e zerou em ' + rot(M[i]) + ". Balcão por código; 99Food por família. iFood desligado até corrigir o de-para de tamanhos.</small></div>";
+        pl.appendChild(tabelaOrdenavel([{ id: "nome", nome: "Loja", ord: 1, e: 1 }, { id: "total", nome: "Rupturas", ord: 1 }, { id: "bal", nome: "Balcão", ord: 1 }, { id: "f99", nome: "99Food", ord: 1 }, { id: "saz", nome: "Sazonais (Arraiá)", ord: 1 }, { id: "itens", nome: "Itens", e: 1 }],
+          lojasR.map(function (o) { return '<tr><td class="loja e">' + esc(o.nome) + "</td><td><b>" + o.total + "</b></td><td>" + o.bal + "</td><td>" + o.f99 + "</td><td>" + o.saz + '</td><td class="e" style="white-space:normal;min-width:280px;font-size:13px;color:var(--suave)">' + esc(o.itens.join(", ")) + "</td></tr>"; }), S.ordPL, desenhaLoja));
+      }
+      desenhaLoja();
+    } },
+
+    { id: "invest", nome: "Investimento × retorno", render: function (t) {
+      t.innerHTML = cab("Investimento × retorno", "Quanto cada loja investe em cada plataforma e quanto volta.", "") +
+        pendente("Aguardando a base de investimento", "<p>Para esta aba, basta uma tabela com uma linha por loja, mês e plataforma:</p><p><code>id_loja</code> · <code>ano_mes</code> · <code>plataforma</code> (IFOOD ou 99FOOD) · <code>tipo</code> (anúncio, cupom, taxa…) · <code>valor_investido</code></p><p>Com ela, o portal calcula o retorno por real investido e o custo do investimento sobre o faturamento do canal, por loja e na rede. Se a plataforma informar as vendas atribuídas ao anúncio, inclua uma coluna <code>vendas_atribuidas</code>: é a medida mais justa de retorno.</p>");
+    } }
+  ];
+
+  function montaAlertas(i) {
+    var A = { dado: [], queda: [], alta: [], conf: [], info: [] };
+    D.lojas.filter(function (l) { return l.status === "ativa"; }).forEach(function (l) {
+      var ss = suspeitasLoja(l.id, i);
+      ss.forEach(function (s) {
+        var c = NOME[CANAIS[s.k]];
+        A.dado.push({ tipo: "dado", titulo: l.nome + ": " + c + (s.tipo === "zero" ? " sem venda" : " muito abaixo do normal"),
+          texto: s.tipo === "zero" ? c + " zerou em " + rotLongo(M[i]) + ", mas vendeu em pelo menos 2 dos 3 meses anteriores (" + ultimaVenda(l.id, s.k, i) + ")." + (s.k === 2 ? " Pode ser também que a loja tenha saído do 99Food." : "")
+            : c + " fez " + brl0(val(l.id, s.k, i)) + " em " + rotLongo(M[i]) + ", só " + pct(s.p, 0) + " do normal da loja (mediana dos 12 meses anteriores: " + brl0(s.med) + ").",
+          acao: "Conferir a carga com o Téo antes de tirar conclusão sobre a loja." });
+      });
+      if (ss.length) return;
+      var v = mom(l.id, i);
+      if (v !== null && fat(l.id, i - 1) > 0 && fat(l.id, i) > 0) {
+        if (v <= -20) A.queda.push({ tipo: "queda", titulo: l.nome + ": " + pct(v) + " contra " + mesNome(M[i - 1]), texto: "Faturou " + brl0(fat(l.id, i)) + " em " + rotLongo(M[i]) + " contra " + brl0(fat(l.id, i - 1)) + " no mês anterior. Contra o ano anterior: " + varTxt(yoy(l.id, i, 1)) + ".", acao: "" });
+        if (v >= 25) A.alta.push({ tipo: "alta", titulo: l.nome + ": +" + pct(v) + " contra " + mesNome(M[i - 1]), texto: "Faturou " + brl0(fat(l.id, i)) + " em " + rotLongo(M[i]) + " contra " + brl0(fat(l.id, i - 1)) + " no mês anterior. Contra o ano anterior: " + varTxt(yoy(l.id, i, 1)) + ".", acao: "" });
+      }
+    });
+    A.queda.sort(function (a, b) { return parseFloat(a.titulo.split(": ")[1].replace(",", ".")) - parseFloat(b.titulo.split(": ")[1].replace(",", ".")); });
+    D.lojas.filter(function (l) { return l.status === "ativa" && fat(l.id, i) === 0 && fat(l.id, i - 1) > 0 && !suspeitasLoja(l.id, i).length; }).forEach(function (l) {
+      A.dado.push({ tipo: "dado", titulo: l.nome + ": sem venda em " + rotLongo(M[i]), texto: "A loja está ativa no cadastro e vendeu " + brl0(fat(l.id, i - 1)) + " em " + rot(M[i - 1]) + ", mas não tem venda neste mês.", acao: "Se fechou, pedir ao Téo para marcar ativo = 0." });
+    });
+    D.notas.forEach(function (n) {
+      var a = { tipo: n.tipo, titulo: n.titulo, texto: esc(n.texto), acao: n.acao };
+      if (n.tipo === "dado") A.dado.push(a); else if (n.tipo === "confirmar") A.conf.push(a); else A.info.push(a);
+    });
+    var novas = D.lojas.filter(function (l) { return l.status === "ativa" && fat(l.id, i) > 0 && nova(l, i); });
+    if (novas.length) A.info.push({ tipo: "info", titulo: novas.length + " lojas com menos de 1 ano de histórico", texto: novas.map(function (l) { return esc(l.nome) + " (desde " + rot(l.inicio) + ")"; }).join(", ") + ". Ficam sem comparação com o ano anterior e não pesam no YoY da rede.", acao: "" });
+    return A;
+  }
+  function contaAlertas(i) { var A = montaAlertas(i); return A.dado.length + A.queda.length; }
+
+  /* ---------- Filtros ---------- */
+  var fm = document.getElementById("f-mes");
+  for (var j = NM - 1; j >= 1; j--) fm.insertAdjacentHTML("beforeend", '<option value="' + j + '">' + rotLongo(M[j]) + (j === NM - 1 ? " (último fechado)" : "") + "</option>");
+  fm.addEventListener("change", function () { S.i = +fm.value; atualiza(); });
+  var fc = document.getElementById("f-canal");
+  fc.innerHTML = ["TODOS"].concat(CANAIS).map(function (k) { return '<button type="button" data-c="' + k + '" aria-pressed="' + (k === S.canal) + '">' + (k === "TODOS" ? "" : '<span class="dot" style="background:' + COR[k] + '"></span>') + (k === "TODOS" ? "Todos" : NOME[k]) + "</button>"; }).join("");
+  fc.querySelectorAll("button").forEach(function (b) {
+    b.addEventListener("click", function () { S.canal = b.dataset.c; fc.querySelectorAll("button").forEach(function (x) { x.setAttribute("aria-pressed", String(x === b)); }); atualiza(); });
+  });
+  var fe = document.getElementById("f-enc");
+  fe.addEventListener("change", function () { S.enc = fe.checked; atualiza(); });
+
+  // Comparação começa com as 3 maiores lojas do mês
+  S.cmp = D.lojas.filter(function (l) { return l.status === "ativa"; }).sort(function (a, b) { return fat(b.id, S.i) - fat(a.id, S.i); }).slice(0, 3).map(function (l) { return l.id; });
+
+  /* ---------- Abas ---------- */
+  var abas = document.getElementById("abas"), conteudo = document.getElementById("conteudo");
+  TELAS.forEach(function (tl) {
+    var b = document.createElement("button");
+    b.type = "button"; b.setAttribute("role", "tab"); b.id = "aba-" + tl.id; b.dataset.id = tl.id; b.setAttribute("aria-controls", "tela-" + tl.id);
+    abas.appendChild(b);
+    var sec = document.createElement("section");
+    sec.className = "tela"; sec.id = "tela-" + tl.id; sec.setAttribute("role", "tabpanel"); sec.setAttribute("aria-labelledby", b.id); sec.hidden = true;
+    conteudo.appendChild(sec);
+  });
+  function rotulaAbas() {
+    TELAS.forEach(function (tl) {
+      var n = tl.selo ? tl.selo() : 0;
+      document.getElementById("aba-" + tl.id).innerHTML = esc(tl.nome) + (n ? '<span class="selo" aria-label="' + n + ' alertas">' + n + "</span>" : "");
+    });
+  }
+  function abre(id, foco) {
+    var tl = TELAS.filter(function (x) { return x.id === id; })[0] || TELAS[0];
+    S.aba = tl.id;
+    abas.querySelectorAll("button").forEach(function (b) { var on = b.dataset.id === tl.id; b.setAttribute("aria-selected", String(on)); b.tabIndex = on ? 0 : -1; if (on && foco) b.focus(); });
+    conteudo.querySelectorAll(".tela").forEach(function (s) { s.hidden = s.id !== "tela-" + tl.id; });
+    var sec = document.getElementById("tela-" + tl.id);
+    sec.innerHTML = ""; tl.render(sec);
+    try { history.replaceState(null, "", "#" + tl.id); } catch (e) {}
+    escondeDica();
+  }
+  function atualiza() { rotulaAbas(); abre(S.aba); }
+  abas.addEventListener("click", function (e) { var b = e.target.closest("button"); if (b) abre(b.dataset.id); });
+  abas.addEventListener("keydown", function (e) {
+    var bs = Array.prototype.slice.call(abas.querySelectorAll("button")), k = bs.indexOf(document.activeElement);
+    if (k < 0) return;
+    if (e.key === "ArrowRight") { e.preventDefault(); abre(bs[(k + 1) % bs.length].dataset.id, true); }
+    if (e.key === "ArrowLeft") { e.preventDefault(); abre(bs[(k - 1 + bs.length) % bs.length].dataset.id, true); }
+  });
+
+  document.getElementById("metodo").innerHTML =
+    "<b>Como os números foram calculados</b>" +
+    "<span>Faturamento oficial: balcão (Degust One, sem os pedidos de aplicativo lançados no caixa) + iFood + 99Food (valor que a loja recebe, só pedidos não cancelados). O total da rede inclui todas as lojas com venda no mês, inclusive as que depois fecharam e as de outra marca da franqueadora, para bater com o relatório oficial da rede.</span>" +
+    "<span>“Mesmas lojas”: um canal de uma loja só entra na comparação com o ano anterior se vendeu nos dois períodos. Assim, abertura e fechamento de loja não inflam nem derrubam o crescimento. O 99Food começou em jan/2026 e fica fora do ano a ano.</span>" +
+    "<span>Pontos com mais de um id: os ids listados na aba Alertas foram somados num só ponto, por troca de gestão ou por conta nova na plataforma. Loja de teste fora.</span>" +
+    "<span>Gerado em " + esc(D.gerado_em) + " com dados até " + esc(rotLongo(D.mes_fechado)) + ". Este arquivo tem o faturamento de todas as lojas: uso interno.</span>";
+
+  rotulaAbas();
+  var h = (location.hash || "").replace("#", "");
+  abre(TELAS.some(function (x) { return x.id === h; }) ? h : "rede");
+})();
+</script>
