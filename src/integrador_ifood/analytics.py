@@ -162,6 +162,14 @@ class IFoodAnalytics:
             return f"{BASE}/chain/{self.alvo_id}/orders/kpis"
         return f"{BASE}/merchants/{self.alvo_id}/orders/kpis"
 
+    def _path_log(self):
+        """O caminho do jeito que pode ir para o log: do id (chain_id na rede,
+        merchantId na loja) ficam so os 4 primeiros caracteres.
+        """
+        if not self.alvo_id:
+            return self._path()
+        return self._path().replace(str(self.alvo_id), str(self.alvo_id)[:4] + "...")
+
     def _respeitar_limite(self):
         agora = self.relogio()
         self._chamadas = [t for t in self._chamadas if agora - t < 60]
@@ -214,7 +222,7 @@ class IFoodAnalytics:
                     )
                 self.sleep(2 ** tentativa)
                 continue
-            log.info("POST %s -> %s (tentativa %s)", self._path(), resp.status_code, tentativa)
+            log.info("POST %s -> %s (tentativa %s)", self._path_log(), resp.status_code, tentativa)
             if resp.status_code == 200:
                 return resp.json()
             if resp.status_code in TRANSITORIOS and tentativa < MAX_TENTATIVAS:
