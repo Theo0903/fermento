@@ -3,7 +3,8 @@
 Pagina local (http://127.0.0.1:5000) que mostra os pedidos gravados pelo
 main.py, com o que os criterios de homologacao pedem para aparecer:
 bandeira do cartao, troco, cupom e quem paga, observacoes dos itens,
-codigo de coleta e CPF/CNPJ. Os botoes chamam a API (orders.py).
+codigo de coleta e CPF/CNPJ (mascarado: so os ultimos digitos, LGPD).
+Os botoes chamam a API (orders.py).
 
 Abas: Ativos (pedidos em andamento), Finalizados (concluidos/cancelados), Todos.
 Logos: coloque logo_ifood.png e logo_marca.png na mesma pasta deste arquivo.
@@ -18,6 +19,7 @@ from flask import Flask, abort, redirect, render_template_string, request, send_
 
 import store
 from client import IFoodError, checar
+from fin_calculos import mascarar
 from orders import IFoodOrders, OrderNotFound
 
 PASTA = os.path.dirname(os.path.abspath(__file__))
@@ -155,6 +157,14 @@ def endereco(det):
         a.get("complement"), a.get("district"), a.get("city"), a.get("reference"),
     ]
     return " — ".join(p for p in partes if p) or "—"
+
+
+def documento(det):
+    """CPF/CNPJ do cliente mascarado (LGPD): so os ultimos digitos vao para a tela.
+
+    Campo vazio ou ausente devolve "" (o template entende como "nao mostrar a linha").
+    """
+    return mascarar((det.get("customer") or {}).get("documentNumber"), None)
 
 
 # Paleta (Fred): vinho = marca da Rede Demo; vermelho iFood so onde e iFood.
@@ -311,7 +321,8 @@ PAGINA = """<!doctype html><html lang="pt-br"><head><meta charset="utf-8">
    <div><b>Total: {{ brl(t.orderAmount) }}</b></div></div>
   <div><h2>Cliente</h2>
    <div>{{ (d.customer or {}).name or '—' }}</div>
-   {% if (d.customer or {}).documentNumber %}<div><b>{{ (d.customer or {}).documentType or 'CPF/CNPJ' }}:</b> {{ d.customer.documentNumber }}</div>{% endif %}
+   {% set doc = documento(d) %}
+   {% if doc %}<div><b>{{ (d.customer or {}).documentType or 'CPF/CNPJ' }}:</b> {{ doc }}</div>{% endif %}
    <h2>Entrega</h2>
    {% set e = d.delivery or {} %}
    {% if d.orderTiming == 'SCHEDULED' and d.scheduled %}<div class="agenda"><b>Pedido agendado</b><br>
@@ -441,7 +452,7 @@ def criar_app(api=None, analytics=None, financeiro=None):
             tem_marca=os.path.exists(os.path.join(PASTA, LOGOS["marca"])),
             tem_ifood=os.path.exists(os.path.join(PASTA, LOGOS["ifood"])),
             msg=request.args.get("msg"), brl=brl, pagamentos=pagamentos, cupons=cupons,
-            endereco=endereco, proximo=PROXIMO, finais=FINAIS, status_pt=STATUS_PT,
+            endereco=endereco, documento=documento, proximo=PROXIMO, finais=FINAIS, status_pt=STATUS_PT,
             tipos=TIPOS, entrega=ENTREGA, minutos_desde=minutos_desde, tempo=tempo, dia_hora=dia_hora,
             prazo=PRAZO_CONFIRMAR_MIN, historico=historico, evento_pt=EVENTO_PT,
             tipo=request.args.get("tipo", ""),

@@ -116,6 +116,7 @@ class FinClient:
     def chamar(self, metodo, recurso, merchant_id, params=None, json=None, aceitos=(200,), rota=None):
         """Devolve a resposta (requests.Response) se o status estiver em `aceitos`."""
         path, params = self._endereco(recurso, merchant_id, params, rota)
+        rota_log, params_log = self._para_log(path, params, merchant_id)
         headers = {"x-request-homologation": "true"} if self.homologacao else {}
         if json is not None:
             headers["Content-Type"] = "application/json"
@@ -127,13 +128,13 @@ class FinClient:
             except requests.HTTPError as e:  # o pedido de TOKEN foi recusado
                 raise self._erro_token(e)
             except requests.RequestException as e:
-                log.warning("%s %s: falha de rede (%s)", metodo, path, type(e).__name__)
+                log.warning("%s %s: falha de rede (%s)", metodo, rota_log, type(e).__name__)
                 if tentativa == TENTATIVAS:
                     raise FinError(f"Não consegui falar com o iFood ({type(e).__name__}). Tente de novo em instantes.")
                 self.sleep(espera)
                 espera *= 2
                 continue
-            log.info("%s %s %s -> %s", metodo, path, {k: v for k, v in params.items()}, resp.status_code)
+            log.info("%s %s %s -> %s", metodo, rota_log, params_log, resp.status_code)
             if resp.status_code in aceitos:
                 return resp
             if resp.status_code in TRANSITORIOS and tentativa < TENTATIVAS:
@@ -141,6 +142,16 @@ class FinClient:
                 espera *= 2
                 continue
             raise self._erro(resp, recurso, merchant_id)
+
+    @staticmethod
+    def _para_log(path, params, merchant_id):
+        """Rota e parametros do jeito que podem ir para o log: do merchantId ficam
+        so os 4 primeiros caracteres (da para saber qual loja e, sem gravar o id).
+        """
+        curto = str(merchant_id)[:4] + "..." if merchant_id else ""
+        rota = path.replace(str(merchant_id), curto) if merchant_id else path
+        limpos = {k: (curto if k == "merchantId" else v) for k, v in (params or {}).items()}
+        return rota, limpos
 
     @staticmethod
     def _retry_after(resp):

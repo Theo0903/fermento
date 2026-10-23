@@ -28,6 +28,27 @@ PASTA_ARQ = os.path.join(os.path.dirname(os.path.abspath(__file__)), "conciliaca
 _trava = threading.Lock()
 
 
+def nome_conciliacao(m, comp):
+    """Caminho do arquivo de conciliacao, sempre DENTRO de conciliacao/.
+
+    De cada valor que vem de fora (merchantId, competencia) fica so o ultimo
+    pedaco: um '..\\' no --loja nao escreve em outra pasta.
+    """
+    nome = f"{os.path.basename(str(m))}_{os.path.basename(str(comp))}.csv.gz"
+    return os.path.join(PASTA_ARQ, os.path.basename(nome))
+
+
+def criar_job_exclusivo(lojas, ini, fim):
+    """Porta unica de entrada da extracao: so cria a tarefa se nao houver outra
+    rodando (vale para o painel e para o cmd, que leem o mesmo financeiro.db).
+    """
+    with _trava:
+        if store.job_rodando():
+            raise FinError("Já existe uma extração rodando. Espere terminar.")
+        return store.criar_job("extracao", ",".join(lojas), ini, fim,
+                               len(calc.semanas(ini, fim)) * len(lojas))
+
+
 def erro_fatal(e):
     """Erros que param TUDO (credencial ou endereco errado: nenhuma loja vai funcionar)."""
     return e.status == 401 or "Endereço da API" in str(e) or "login" in str(e).lower()
@@ -102,10 +123,7 @@ def extrair(fin, lojas, ini, fim, job_id=None, hoje=None, avisar=None):
 
 def iniciar_extracao(fabrica_fin, lojas, ini, fim, em_segundo_plano=True):
     """Cria a tarefa e roda numa linha separada (o painel continua respondendo)."""
-    with _trava:
-        if store.job_rodando():
-            raise FinError("Já existe uma extração rodando. Espere terminar.")
-        job_id = store.criar_job("extracao", ",".join(lojas), ini, fim, len(calc.semanas(ini, fim)) * len(lojas))
+    job_id = criar_job_exclusivo(lojas, ini, fim)
     def rodar():
         try:
             fin = fabrica_fin()
@@ -149,7 +167,7 @@ def verificar_conciliacao(fin, m, comp):
         store.salvar_conciliacao(m, comp, status="processando", mensagem="O iFood ainda está gerando o arquivo.")
         return "processando"
     os.makedirs(PASTA_ARQ, exist_ok=True)
-    destino = os.path.join(PASTA_ARQ, f"{m}_{comp}.csv.gz")
+    destino = nome_conciliacao(m, comp)
     fin.baixar(url, destino)
     linhas, resumo, _ = calc.ler_conciliacao(destino)
     store.salvar_linhas_conciliacao(m, comp, linhas)
@@ -212,7 +230,12 @@ def main(argv=None):
     except FinError as e:
         print("ERRO:", e)
         return 1
-    job = store.criar_job("extracao", ",".join(lojas), ini, fim, len(calc.semanas(ini, fim)) * len(lojas))
+    try:
+        job = criar_job_exclusivo(lojas, ini, fim)
+    except FinError as erro:
+        print("ERRO:", erro)
+        print("Dica: o painel pode estar extraindo agora. Veja o andamento em /financeiro.")
+        return 1
     r = extrair(fin, lojas, ini, fim, job, avisar=print)
     print(f"\n{r['status'].upper()}: {r['mensagem']}")
     return 0 if r["status"] == "concluido" else 1
